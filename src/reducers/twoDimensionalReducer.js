@@ -1,23 +1,27 @@
 import {
-  REQUEST_VIZWIZ_LIST,
-  RECEIVE_VIZWIZ_LIST
-} from '../actions/vizwizActions.js'
+  REQUEST_2D_VIDEO,
+  RECEIVE_2D_VIDEO
+} from '../actions/twoDimensionalActions.js'
 
-export function vizwizList( state = {isFetching: false, list: []}, action) {
+
+export function video( state = {isFetching: false}, action) {
   switch (action.type) {
-    case REQUEST_VIZWIZ_LIST:
-      return { ...state,
-               isFetching: true}
-    case RECEIVE_VIZWIZ_LIST:
-      return { ...state,
-               isFetching: false,
-               list: action.list,
-               lastUpdated: action.receivedAt
-             }
+    case REQUEST_2D_VIDEO:
+      return Object.assign({}, state, {
+        isFetching: true
+      })
+    case RECEIVE_2D_VIDEO:
+      return Object.assign({}, state, {
+        isFetching: false,
+        lastUpdated: action.receivedAt
+      }, Object.assign({}, action.data))
     default:
       return state
   }
 }
+
+
+
 
 
 

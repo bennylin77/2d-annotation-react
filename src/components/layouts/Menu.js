@@ -31,15 +31,12 @@ class Menu extends React.Component {
     return (
       <div>
         <Navbar color="light" light expand="md">
-          <NavbarBrand href="/">React D3</NavbarBrand>
+          <NavbarBrand href="/">React Annotation</NavbarBrand>
           <NavbarToggler onClick={this.toggle} />
           <Collapse isOpen={this.state.isOpen} navbar>
             <Nav className="ml-auto" navbar>
               <NavItem>
-                <Link to="/vizwiz/wordCloud" className="nav-link">WordCloud</Link>
-              </NavItem>
-							<NavItem>
-								<Link to="/vizwiz/sunburst" className="nav-link">Sunburst</Link>
+                <Link to="/two-dimensional/video" className="nav-link">2D Video</Link>
               </NavItem>
             </Nav>
           </Collapse>

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import VizWiz from '../vizwiz/Entry';
+import TwoDimensional from '../two-dimensional/Entry';
 //import Sunburst from '../gallery/Sunburst';
 //import WordCloud from '../gallery/WordCloud';
 import { Switch, Route } from 'react-router-dom'
@@ -8,7 +8,7 @@ class Main extends Component {
 				return (
 					<main>
 						<Switch>
-			        <Route path='/vizwiz' component={VizWiz}/>
+			        <Route path='/two-dimensional/video' component={TwoDimensional}/>
 			      </Switch>
 					</main>);
 	}

@@ -1,5 +1,8 @@
-export const REQUEST_VIZWIZ_LIST = 'REQUEST_VIZWIZ_LIST'
-export const RECEIVE_VIZWIZ_LIST = 'RECEIVE_VIZWIZ_LIST'
+export const REQUEST_2D_VIDEO_LIST = 'REQUEST_2D_VIDEO_LIST'
+export const RECEIVE_2D_VIDEO_LIST = 'RECEIVE_2D_VIDEO_LIST'
+export const REQUEST_2D_VIDEO = 'REQUEST_2D_VIDEO'
+export const RECEIVE_2D_VIDEO = 'RECEIVE_2D_VIDEO'
+export const EDIT_2D_VIDEO = 'EDIT_2D_VIDEO'
 
 /*
 export function fetchVizwizList(){
@@ -17,32 +20,41 @@ export function fetchVizwizList(){
 	}
 }
 */
-
-
-export function fetchVizwizList(){
-  return (dispatch, getState) => {
-    dispatch( requestVizwizList() )
-		var proxyUrl = 'https://cors-anywhere.herokuapp.com/',
-		    targetUrl = 'http://chi-lin.com:8082/datasets/vizwiz/vizwiz_train'
-    return fetch(proxyUrl + targetUrl)
-			.then(response => response.json())
-      .then(result => {
-				dispatch(receiveVizwizList(result))
-			})
+export function fetch2DVideo(id){
+	return (dispatch, getState) => {
+    dispatch(request2DVideo(id))
+    return new Promise((resolve, reject) => {
+			const dummnyResponse = {
+				width: 640,
+				eight: 480,
+				url: "https://www.youtube.com/watch?v=f0UGnI5N8lg"
+			}
+			resolve(dummnyResponse)
+		}).then(response => dispatch(receive2DVideo(id, response)))
   }
+
 }
-function receiveVizwizList(data){
-	return {
-    type: RECEIVE_VIZWIZ_LIST,
-		list: data,
-		receivedAt: Date.now()
-  }
-}
-function requestVizwizList() {
+function request2DVideo(id) {
   return {
-    type: REQUEST_VIZWIZ_LIST
+    type: REQUEST_2D_VIDEO,
+		list: 'twoDimensionalVideoList',
+		id
   }
 }
+function receive2DVideo(id, data) {
+    return {
+      type: RECEIVE_2D_VIDEO,
+      receivedAt: Date.now(),
+      list: 'twoDimensionalVideoList',
+      data: Object.assign({}, data),
+      id
+    }
+}
+
+
+
+
+
 /*
 //====================Project====================//
 
