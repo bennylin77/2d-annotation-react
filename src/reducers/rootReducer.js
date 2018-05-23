@@ -11,7 +11,7 @@ function editing(state = {}, action) {
   switch (action.type) {
     case EDIT_2D_VIDEO:
       return Object.assign({}, state, {
-        [action.collection]: action.parameters
+        [action.collection]: action.params
       })
     default:
       return state

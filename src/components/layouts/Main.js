@@ -8,7 +8,7 @@ class Main extends Component {
 				return (
 					<main>
 						<Switch>
-			        <Route path='/two-dimensional/video' component={TwoDimensional}/>
+			        <Route path='/two-dimensional' component={TwoDimensional}/>
 			      </Switch>
 					</main>);
 	}

@@ -3,45 +3,47 @@ export const RECEIVE_2D_VIDEO_LIST = 'RECEIVE_2D_VIDEO_LIST'
 export const REQUEST_2D_VIDEO = 'REQUEST_2D_VIDEO'
 export const RECEIVE_2D_VIDEO = 'RECEIVE_2D_VIDEO'
 export const EDIT_2D_VIDEO = 'EDIT_2D_VIDEO'
+export const UPDATE_2D_VIDEO = 'UPDATE_2D_VIDEO'
 
-/*
-export function fetchVizwizList(){
-	return (dispatch, getState) => {
-    dispatch( requestVizwizList() )
-		const readFile = new Promise((resolve, reject)=>{
-			console.log(fs)
-			fs.readFile('./data/vizwiz_train.json', (err, data) => {
-			    if (err) throw err;
-			    let vizwiz = JSON.parse(data);
-					resolve(vizwiz)
-			});
-		})
-		return readFile.then( data => dispatch(receiveVizwizList(data)) )
-	}
-}
-*/
 export function fetch2DVideo(id){
 	return (dispatch, getState) => {
     dispatch(request2DVideo(id))
     return new Promise((resolve, reject) => {
 			const dummnyResponse = {
 				width: 640,
-				eight: 480,
-				url: "https://www.youtube.com/watch?v=f0UGnI5N8lg"
+				height: 480,
+				url: "https://www.youtube.com/watch?v=AxQyxCF99rw"
 			}
 			resolve(dummnyResponse)
 		}).then(response => dispatch(receive2DVideo(id, response)))
   }
-
 }
-function request2DVideo(id) {
+export function editAndFetch2DVideoIfNeeded(id) {
+  return (dispatch, getState) => {
+    if (shouldFetch2DVideo(getState(), id))
+      return dispatch(fetch2DVideo(id))
+							.then(dispatch(edit2DVideo(id)))
+    else
+      return dispatch(edit2DVideo(id))
+  }
+}
+const shouldFetch2DVideo = (state, id) => {
+  const video = state.lists.twoDimensionalVideoList[id]
+  if (!video)
+    return true
+  else if(video.isFetching)
+    return false
+  else
+    return true
+}
+const request2DVideo = (id) => {
   return {
     type: REQUEST_2D_VIDEO,
 		list: 'twoDimensionalVideoList',
 		id
   }
 }
-function receive2DVideo(id, data) {
+const receive2DVideo = (id, data) => {
     return {
       type: RECEIVE_2D_VIDEO,
       receivedAt: Date.now(),
@@ -50,9 +52,13 @@ function receive2DVideo(id, data) {
       id
     }
 }
-
-
-
+const edit2DVideo = (id) => {
+  return {
+    type: EDIT_2D_VIDEO,
+    collection: 'twoDimensionalVideo',
+		params: { id: id }
+  }
+}
 
 
 /*
