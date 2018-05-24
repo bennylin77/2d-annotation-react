@@ -19,47 +19,86 @@ class Canvas extends Component {
    };
 
 
-	 handleStageMouseMove = e => {
-		 this.props.onCanvasStageMouseMove(e);
-	 }
-	 handleStageMouseDown = e => {
-		 this.props.onCanvasStageMouseDown(e);
-	 }
-	 handleStageMouseUp = e => {
-		 this.props.onCanvasStageMouseUp(e);
-	 }
-	 handleGroupMouseDown = e => {
-		 this.props.onCanvasGroupMouseDown(e);
-	 }
-	 handleGroupDragStart = e => {
-		 this.props.onCanvasGroupDragStart(e);
-	 }
-	 handleGroupDragEnd = e => {
-		 this.props.onCanvasGroupDragEnd(e);
-	 }
+	handleStageMouseMove = e => {
+	  this.props.onCanvasStageMouseMove(e);
+	}
+	handleStageMouseDown = e => {
+	  this.props.onCanvasStageMouseDown(e);
+	}
+	handleStageMouseUp = e => {
+		this.props.onCanvasStageMouseUp(e);
+	}
+	handleGroupMouseDown = e => {
+	  this.props.onCanvasGroupMouseDown(e);
+	}
+	handleGroupDragStart = e => {
+		this.props.onCanvasGroupDragStart(e);
+	}
+	handleGroupDragEnd = e => {
+		this.props.onCanvasGroupDragEnd(e);
+	}
+	handleGroupRef = r => {
+    this.props.onCanvasGroupRef(r);
+  }
+	handleCircleMouseDown = e => {
+		const target = e.target
+		target.getParent().draggable(false)
+		target.moveToTop()
+		console.log(target.getParent().draggable())
+	}
+	handleCircleDragEnd = e => {
+		this.props.onCanvasCircleDragEnd(e)
+		//const target = e.target
+		//target.getParent().draggable(true)
+	}
+	handleCircleDragMove = e => {
 
-	 handleGroupRef = r => {
-     this.props.onCanvasGroupRef(r);
-   }
 
-handle = e => {
-/*
-	const target = e.target
-	const offsetX = parseInt(target.x())
-	const offsetY = parseInt(target.y())
-	console.log(target.getAbsolutePosition())
-	console.log(`offsetX: ${offsetX} offsetY: ${offsetY}`)
-	console.log(`x: ${target.x()} y: ${target.y()}`)*/
-}
-/*
-	 handle = (e) => {
-     // to() is a method of `Konva.Node` instances
-		 console.log(e)
-		 console.log(e.target.offsetY())
-     console.log(e.target.offsetY())
-		 console.log(e.target.getChildren())
-   }
-*/
+		const activeAnchor = e.target
+		const group = activeAnchor.getParent();
+		const topLeft = group.get('.topLeft')[0],
+					topRight = group.get('.topRight')[0],
+					bottomRight = group.get('.bottomRight')[0],
+					bottomLeft = group.get('.bottomLeft')[0];
+		const rect = group.get('Rect')[0];
+
+		const anchorX = activeAnchor.getX();
+		const anchorY = activeAnchor.getY();
+
+						//console.log(anchorX)
+						//console.log(anchorY)
+
+		        // update anchor positions
+		        switch (activeAnchor.getName()) {
+		            case 'topLeft':
+		                topRight.setY(anchorY);
+		                bottomLeft.setX(anchorX);
+		                break;
+		            case 'topRight':
+		                topLeft.setY(anchorY);
+		                bottomRight.setX(anchorX);
+		                break;
+		            case 'bottomRight':
+		                bottomLeft.setY(anchorY);
+		                topRight.setX(anchorX);
+		                break;
+		            case 'bottomLeft':
+		                bottomRight.setY(anchorY);
+		                topLeft.setX(anchorX);
+		                break;
+		        }
+		        rect.position(topLeft.position());
+		        var width = topRight.getX() - topLeft.getX();
+		        var height = bottomLeft.getY() - topLeft.getY();
+		        if(width && height) {
+		            rect.width(width);
+		            rect.height(height);
+		        }
+	}
+
+	handle = e => {
+	}
+
 	render() {
 		const { height, width, objects, played} = this.props;
 		const layerItems = [];
@@ -67,13 +106,15 @@ handle = e => {
 		objects.forEach( obj => {
 			let trajectories = obj.trajectories
 			let rect;
+			let x, y, width, height
+			console.log(`obj.trajectories size: ${obj.trajectories.length }`)
+
 			for( let i = 0; i < trajectories.length; i++){
 				if(played >= trajectories[i].time){
-					//skip past trajectories
+					//skip elapsed trajectories
 					if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 						continue;
 
-					let x, y, width, height
 					if(i===trajectories.length-1){
 						x=trajectories[i].x;
 						y=trajectories[i].y;
@@ -82,9 +123,9 @@ handle = e => {
 					}else{
 						let startTraj = trajectories[i], endTraj = trajectories[i+1]
 						let lapseTime = endTraj.time - startTraj.time;
+						let curTime = played - startTraj.time;
 						let xSlope = (endTraj.x - startTraj.x)/lapseTime, ySlope = (endTraj.y - startTraj.y)/lapseTime;
 						// set x and y position
-						let curTime = played - startTraj.time;
 						x = xSlope * curTime + startTraj.x;
 						y = ySlope * curTime + startTraj.y;
 					  // set width and height
@@ -92,16 +133,19 @@ handle = e => {
 						width = widthSlope * curTime + startTraj.width
 						height = heightSlope * curTime + startTraj.height
 					}
-					rect = <Rect x={x-obj.offset.x} y={y-obj.offset.y} width={width} height={height} stroke={obj.stroke}/>
-					//console.log(`render played: ${played}`)
-					//console.log(`render offsetX: ${obj.offset.x} offsetY: ${obj.offset.y}`)
+					rect = <Rect width={width} height={height} stroke={obj.stroke}/>
 					break;
 				}
 			}
-			layerItems.push(<Group key={`${obj.id}`} ref={this.handleGroupRef} id={`${obj.id}`} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}</Group>);
+
+			let circles = []
+			circles.push(<Circle x={0} y={0} key={'topLeft'} name={'topLeft'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+			circles.push(<Circle x={width} y={0} key={'topRight'} name={'topRight'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+			circles.push(<Circle x={width} y={height} key={'bottomRight'} name={'bottomRight'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+			circles.push(<Circle x={0} y={height} key={'bottomLeft'} name={'bottomLeft'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+
+			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}</Group>);
 		});
-
-
 
 		return(
 						<Stage width={width} height={height} className="konva-wrapper" onMouseDown={this.handleStageMouseDown} onMouseUp={this.handleStageMouseUp} onMouseMove={this.handleStageMouseMove}>
