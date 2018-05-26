@@ -6,18 +6,6 @@ import Konva from 'konva';
 
 
 class Canvas extends Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-    	color: 'green'
-  	};
-	}
-	handleClick = () => {
-     this.setState({
-       color: Konva.Util.getRandomColor()
-     });
-   };
-
 
 	handleStageMouseMove = e => {
 	  this.props.onCanvasStageMouseMove(e);
@@ -44,7 +32,7 @@ class Canvas extends Component {
 		const target = e.target
 		target.getParent().draggable(false)
 		target.moveToTop()
-		console.log(target.getParent().draggable())
+		//console.log(target.getParent().draggable())
 	}
 	handleCircleDragEnd = e => {
 		this.props.onCanvasCircleDragEnd(e)
@@ -52,52 +40,46 @@ class Canvas extends Component {
 		//target.getParent().draggable(true)
 	}
 	handleCircleDragMove = e => {
-
-
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
-		const topLeft = group.get('.topLeft')[0],
-					topRight = group.get('.topRight')[0],
-					bottomRight = group.get('.bottomRight')[0],
-					bottomLeft = group.get('.bottomLeft')[0];
+		const topLeft = group.get('.topLeft')[0], topRight = group.get('.topRight')[0], bottomRight = group.get('.bottomRight')[0], bottomLeft = group.get('.bottomLeft')[0];
 		const rect = group.get('Rect')[0];
-
 		const anchorX = activeAnchor.getX();
 		const anchorY = activeAnchor.getY();
 
-						//console.log(anchorX)
-						//console.log(anchorY)
+		//console.log(`x: ${anchorX}, y: ${anchorY}`)
 
-		        // update anchor positions
-		        switch (activeAnchor.getName()) {
-		            case 'topLeft':
-		                topRight.setY(anchorY);
-		                bottomLeft.setX(anchorX);
-		                break;
-		            case 'topRight':
-		                topLeft.setY(anchorY);
-		                bottomRight.setX(anchorX);
-		                break;
-		            case 'bottomRight':
-		                bottomLeft.setY(anchorY);
-		                topRight.setX(anchorX);
-		                break;
-		            case 'bottomLeft':
-		                bottomRight.setY(anchorY);
-		                topLeft.setX(anchorX);
-		                break;
-		        }
-		        rect.position(topLeft.position());
-		        var width = topRight.getX() - topLeft.getX();
-		        var height = bottomLeft.getY() - topLeft.getY();
-		        if(width && height) {
-		            rect.width(width);
-		            rect.height(height);
-		        }
+	  // update anchor positions
+		switch (activeAnchor.getName()) {
+			case 'topLeft':
+		  	topRight.setY(anchorY);
+		    bottomLeft.setX(anchorX);
+		    break;
+			case 'topRight':
+		    topLeft.setY(anchorY);
+		    bottomRight.setX(anchorX);
+		    break;
+		  case 'bottomRight':
+		    bottomLeft.setY(anchorY);
+		    topRight.setX(anchorX);
+		    break;
+		  case 'bottomLeft':
+		    bottomRight.setY(anchorY);
+		    topLeft.setX(anchorX);
+		    break;
+		}
+		rect.position(topLeft.position());
+		const width = topRight.getX() - topLeft.getX();
+		const height = bottomLeft.getY() - topLeft.getY();
+		if(width && height) {
+			rect.width(width);
+		  rect.height(height);
+		}
 	}
 
 	handle = e => {
 	}
+
 
 	render() {
 		const { height, width, objects, played} = this.props;
@@ -107,7 +89,7 @@ class Canvas extends Component {
 			let trajectories = obj.trajectories
 			let rect;
 			let x, y, width, height
-			console.log(`obj.trajectories size: ${obj.trajectories.length }`)
+			//console.log(`obj.trajectories size: ${obj.trajectories.length }`)
 
 			for( let i = 0; i < trajectories.length; i++){
 				if(played >= trajectories[i].time){
@@ -133,7 +115,7 @@ class Canvas extends Component {
 						width = widthSlope * curTime + startTraj.width
 						height = heightSlope * curTime + startTraj.height
 					}
-					rect = <Rect width={width} height={height} stroke={obj.stroke}/>
+					rect = <Rect x={0} y={0} width={width} height={height} stroke={obj.stroke}/>
 					break;
 				}
 			}

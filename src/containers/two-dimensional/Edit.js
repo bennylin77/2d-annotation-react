@@ -25,7 +25,6 @@ class Edit extends Component {
     return (!twoDimensionalVideoList[id] || twoDimensionalVideoList[id].isFetching) ? true : false;
   }
 
-
 	/* ==================== video player ==================== */
 	playerRef = player => {
 		this.player = player
@@ -78,13 +77,8 @@ class Edit extends Component {
 		this.setState((prevState, props) => {
 			const name = (new Date()).getTime();
 			const stroke = colors[getRandomInt(3)]
-			//const anchors = []
-			//anchors.push({name: 'topLeft', x: 0, y: 0})
-			//anchors.push({name: 'topRight', x: 20, y: 0})
-			//anchors.push({name: 'bottomRight', x: 20, y: 20})
-			//anchors.push({name: 'bottomLeft', x: 0, y: 20})
 			const trajectories = []
-			trajectories.push({x: position.x, y: position.y, height: 20, width: 20, time: prevState.played})
+			trajectories.push({x: position.x, y: position.y, height: 100, width: 100, time: prevState.played})
 			return { adding: !prevState.adding, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false}]};
 		});
 	}
@@ -115,8 +109,6 @@ class Edit extends Component {
 					if(obj.name !== target.name())
 						return obj;
 
-
-
 					let trajectories = obj.trajectories
 					for( let i = 0; i < trajectories.length; i++){
 						if(played >= trajectories[i].time){
@@ -143,12 +135,6 @@ class Edit extends Component {
 							break;
 						}
 					}
-
-
-
-
-
-
 
 					//the trajectories sorded by the time
 					trajectories.sort(function(a, b) {
@@ -178,16 +164,15 @@ class Edit extends Component {
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
 		group.draggable(true)
-
+		
 		let topLeft = group.get('.topLeft')[0];
 		let topRight = group.get('.topRight')[0];
 		let bottomRight = group.get('.bottomRight')[0];
 		let bottomLeft = group.get('.bottomLeft')[0];
-		let width = topRight.getX() - topLeft.getX();
-		let height = bottomLeft.getY() - topLeft.getY();
+		let width = Math.abs(topRight.x() - topLeft.x());
+		let height =  Math.abs(bottomLeft.y() - topLeft.y());
 
 		if(width && height) {
-
 			this.setState((prevState, props) => {
 				const played = prevState.played
 				return { objects: prevState.objects.map( obj =>{
@@ -195,28 +180,48 @@ class Edit extends Component {
 							return obj;
 						let trajectories = obj.trajectories
 
-						console.log(`trajectories size: ${trajectories.length}`)
+						//console.log(`trajectories size: ${trajectories.length}`)
 
 						for( let i = 0; i < trajectories.length; i++){
 
-							console.log(i)
+							//console.log(i)
 
 							if(played >= trajectories[i].time){
 								//skip elapsed trajectories
 								if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 									continue;
 
-								//console.log(played)
-
-								//console.log(trajectories[i].time)
+								let originalX = trajectories[i].x;
+								let originalY = trajectories[i].y;
+								let newX, newY;
+								if(topLeft.x()<topRight.x() && topLeft.y()<bottomLeft.y()){
+									newX = originalX + topLeft.x()
+									newY = originalY + topLeft.y()
+									console.log('topLeft')
+								}else if(topRight.x()<topLeft.x() && topRight.y()<bottomLeft.y()){
+									newX = originalX + topRight.x()
+									newY = originalY + topRight.y()
+									console.log('topRight')
+								}else if(bottomLeft.x()<topRight.x() && bottomLeft.y()<topLeft.y()){
+									newX = originalX + bottomLeft.x()
+									newY = originalY + bottomLeft.y()
+									console.log('bottomLeft')
+								}else if(bottomRight.x()<bottomLeft.x() && bottomRight.y()<topRight.y()){
+									newX = originalX + bottomRight.x()
+									newY = originalY + bottomRight.y()
+									console.log('bottomRight')
+								}
 
 								if(played===trajectories[i].time){
-									trajectories[i].width = width; trajectories[i].height = height;
+									trajectories[i].x=newX;
+									trajectories[i].y=newY;
+									trajectories[i].width=width;
+									trajectories[i].height=height;
 									break;
 								}
 
 								if(i===trajectories.length-1){
-									trajectories = [ ...obj.trajectories, {x: trajectories[i].x, y: trajectories[i].y, height: height, width: width, time: played}];
+									trajectories = [ ...obj.trajectories, {x: newX, y: newY, height: height, width: width, time: played}];
 									break;
 								}
 
@@ -225,9 +230,9 @@ class Edit extends Component {
 								let xSlope = (endTraj.x - startTraj.x)/lapseTime, ySlope = (endTraj.y - startTraj.y)/lapseTime;
 								// set x and y position
 								let curTime = played - startTraj.time;
-								let x = xSlope * curTime + startTraj.x;
-								let y = ySlope * curTime + startTraj.y;
-								trajectories = [ ...obj.trajectories, {x: x, y: y, height: height, width: width, time: played}];
+								newX = xSlope * curTime + newX;
+								newY = ySlope * curTime + newY;
+								trajectories = [ ...obj.trajectories, {x: newX, y: newY, height: height, width: width, time: played}];
 								break;
 							}
 						}
@@ -239,6 +244,7 @@ class Edit extends Component {
 							if (timeA > timeB) return 1;
 							return 0;
 						});
+
 						return { ...obj, trajectories: trajectories};
 					})
 				}
@@ -246,8 +252,6 @@ class Edit extends Component {
 		}
 	}
 	handleCanvasCircleDragMove = e =>{
-
-
 	}
 
 
@@ -314,39 +318,7 @@ const colors = ["rgba(3, 169, 244, 0.7)", "rgba(244, 67, 54, 0.7)", "rgba(233, 3
 const getRandomInt = max => {
   return Math.floor(Math.random() * Math.floor(max));
 }
-/*
-const setGroupXY = (played, objs) => {
-	return objs.map( obj =>{
-		let offsetX = obj.offset.x, offsetY = obj.offset.y
-		let trajectories = obj.trajectories
-		for( let i = 0; i < trajectories.length; i++){
-			// To find the played time between which trajectories
-			if(played >= trajectories[i].time){
-				if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
-					continue;
-				if(i===trajectories.length-1){
-					offsetX = trajectories[i].x - trajectories[0].x;
-					offsetY = trajectories[i].y - trajectories[0].y;
-				}else{
-					let startTraj = trajectories[i], endTraj = trajectories[i+1]
-					let lapseTime = endTraj.time - startTraj.time;
-					let xSlope = (endTraj.x - startTraj.x)/lapseTime, ySlope = (endTraj.y - startTraj.y)/lapseTime;
-					// set x and y position
-					let curTime = played - startTraj.time;
-					let x = xSlope * curTime + startTraj.x;
-					let y = ySlope * curTime + startTraj.y;
-					offsetX = x - trajectories[0].x;
-					offsetY = y - trajectories[0].y;
-				}
-				obj.Group.x(offsetX);
-				obj.Group.y(offsetY);
-				break;
-			}
-		}
-		return { ...obj, offset: {x:offsetX, y:offsetY }};
-	})
-}
-*/
+
 //connect
 function mapStateToProps(state) {
   const { editing, lists: {twoDimensionalVideoList} }= state
