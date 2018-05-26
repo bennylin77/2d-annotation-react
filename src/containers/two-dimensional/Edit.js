@@ -3,6 +3,7 @@ import Player from '../../components/two-dimensional/player/Player';
 import Slider from '../../components/two-dimensional/player/Slider';
 import Duration from '../../components/two-dimensional/player/Duration';
 import Canvas from '../../components/two-dimensional/canvas/Canvas';
+import List from '../../components/two-dimensional/list/List';
 import { fetch2DVideo, editAndFetch2DVideoIfNeeded } from '../../actions/twoDimensionalActions.js';
 import { connect } from 'react-redux';
 import { Container, Row, Col, Button} from 'reactstrap';
@@ -149,6 +150,7 @@ class Edit extends Component {
 		})
 	}
 	handleCanvasGroupRef = r =>{
+		/*
 		this.setState((prevState, props) => {
 			return {  objects: prevState.objects.map( obj =>{
 					if(obj.name !== r.name())
@@ -156,7 +158,7 @@ class Edit extends Component {
 					return { ...obj, Group: r };
 				})
 			}
-		})
+		})*/
 	}
 
 	handleCanvasCircleDragEnd = e =>{
@@ -164,7 +166,7 @@ class Edit extends Component {
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
 		group.draggable(true)
-		
+
 		let topLeft = group.get('.topLeft')[0];
 		let topRight = group.get('.topRight')[0];
 		let bottomRight = group.get('.bottomRight')[0];
@@ -254,6 +256,24 @@ class Edit extends Component {
 	handleCanvasCircleDragMove = e =>{
 	}
 
+	/* ==================== list ==================== */
+
+	handleListObjectDelete = name =>{
+		this.setState((prevState) => {
+				const objects = prevState.objects.filter( object => {
+
+					if(object.name !== name)
+						return true;
+
+
+					return false
+					});
+				console.log("-----------")
+				console.log(objects)
+				return { objects: objects };
+		});
+	}
+
 
   render() {
 		const {	playing, played, duration, adding, objects} = this.state;
@@ -307,6 +327,14 @@ class Edit extends Component {
 											onSliderMouseUp={this.handleSliderMouseUp}
 											onSliderMouseDown={this.handleSliderMouseDown}
 											onSliderChange={this.handleSliderChange}/>
+						</Col>
+					</Row>
+					<Row className="py-1">
+						<Col>
+							<List objects= {objects}
+										duration= {duration}
+										onListObjectDelete= {this.handleListObjectDelete}
+										/>
 						</Col>
 					</Row>
 			</Container>
