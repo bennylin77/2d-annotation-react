@@ -74,13 +74,18 @@ class Edit extends Component {
 	handleCanvasStageMouseDown = e =>{
 		if(!this.state.adding)
 			return;
-		const position = e.target.getPointerPosition()
+		const stage = e.target.getStage()
+		const position = stage.getPointerPosition()
+		const name = (new Date()).getTime();
+		const stroke = colors[getRandomInt(3)]
+		const trajectories = []
 		this.setState((prevState, props) => {
-			const name = (new Date()).getTime();
-			const stroke = colors[getRandomInt(3)]
-			const trajectories = []
-			trajectories.push({x: position.x, y: position.y, height: 100, width: 100, time: prevState.played})
+			trajectories.push({x: position.x, y: position.y, height: 1, width: 1, time: prevState.played})
 			return { adding: !prevState.adding, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false}]};
+		}, () => {
+			const group = stage.find(`.${name}`)[0]
+			const bottomRight = group.get('.bottomRight')[0]
+			bottomRight.startDrag()
 		});
 	}
 	handleCanvasStageMouseUp = e => {

@@ -31,6 +31,8 @@ class Canvas extends Component {
 	handleCircleMouseDown = e => {
 		const target = e.target
 		target.getParent().draggable(false)
+		//console.log('aaa')
+		//console.log(target.getParent())
 		target.moveToTop()
 		//console.log(target.getParent().draggable())
 	}
@@ -115,16 +117,16 @@ class Canvas extends Component {
 						width = widthSlope * curTime + startTraj.width
 						height = heightSlope * curTime + startTraj.height
 					}
-					rect = <Rect x={0} y={0} width={width} height={height} stroke={obj.stroke}/>
+					rect = <Rect x={0} y={0} width={width} height={height} stroke={obj.stroke} strokeWidth={2}/>
 					break;
 				}
 			}
 
 			let circles = []
-			circles.push(<Circle x={0} y={0} key={'topLeft'} name={'topLeft'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-			circles.push(<Circle x={width} y={0} key={'topRight'} name={'topRight'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-			circles.push(<Circle x={width} y={height} key={'bottomRight'} name={'bottomRight'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-			circles.push(<Circle x={0} y={height} key={'bottomLeft'} name={'bottomLeft'} stroke={'#666'} fill={'#ddd'} strokeWidth={2} radius={8} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+			circles.push(<Circle x={0} y={0} key={'topLeft'} name={'topLeft'} stroke={'#000'} fill={'#ffffff'} strokeWidth={1} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+			circles.push(<Circle x={width} y={0} key={'topRight'} name={'topRight'} stroke={'#000'} fill={'#ffffff'} strokeWidth={1} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+			circles.push(<Circle x={width} y={height} key={'bottomRight'} name={'bottomRight'} stroke={'#000'} fill={'#ffffff'} strokeWidth={1} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
+			circles.push(<Circle x={0} y={height} key={'bottomLeft'} name={'bottomLeft'} stroke={'#000'} fill={'#ffffff'} strokeWidth={1} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
 
 			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}</Group>);
 		});
