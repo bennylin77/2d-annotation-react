@@ -81,7 +81,7 @@ class Edit extends Component {
 		const trajectories = []
 		this.setState((prevState, props) => {
 			trajectories.push({x: position.x, y: position.y, height: 1, width: 1, time: prevState.played})
-			return { adding: !prevState.adding, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false}]};
+			return { adding: !prevState.adding, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false, exit: false, exitTime: 0}]};
 		}, () => {
 			const group = stage.find(`.${name}`)[0]
 			const bottomRight = group.get('.bottomRight')[0]
@@ -187,12 +187,7 @@ class Edit extends Component {
 							return obj;
 						let trajectories = obj.trajectories
 
-						//console.log(`trajectories size: ${trajectories.length}`)
-
 						for( let i = 0; i < trajectories.length; i++){
-
-							//console.log(i)
-
 							if(played >= trajectories[i].time){
 								//skip elapsed trajectories
 								if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
@@ -218,7 +213,6 @@ class Edit extends Component {
 									newY = originalY + bottomRight.y()
 									console.log('bottomRight')
 								}
-
 								if(played===trajectories[i].time){
 									trajectories[i].x=newX;
 									trajectories[i].y=newY;
@@ -226,12 +220,10 @@ class Edit extends Component {
 									trajectories[i].height=height;
 									break;
 								}
-
 								if(i===trajectories.length-1){
 									trajectories = [ ...obj.trajectories, {x: newX, y: newY, height: height, width: width, time: played}];
 									break;
 								}
-
 								let startTraj = trajectories[i], endTraj = trajectories[i+1]
 								let lapseTime = endTraj.time - startTraj.time;
 								let xSlope = (endTraj.x - startTraj.x)/lapseTime, ySlope = (endTraj.y - startTraj.y)/lapseTime;
@@ -243,7 +235,6 @@ class Edit extends Component {
 								break;
 							}
 						}
-
 						//the trajectories sorded by the time
 						trajectories.sort(function(a, b) {
 							const timeA = a.time, timeB = b.time;
@@ -251,7 +242,6 @@ class Edit extends Component {
 							if (timeA > timeB) return 1;
 							return 0;
 						});
-
 						return { ...obj, trajectories: trajectories};
 					})
 				}
@@ -260,21 +250,56 @@ class Edit extends Component {
 	}
 	handleCanvasCircleDragMove = e =>{
 	}
+	handleCanvasExitClick = e => {
+		const group = e.target.getParent().getParent()
+		this.setState((prevState, props) => {
+			const played = prevState.played
+			return { objects: prevState.objects.reduce( (newObjects, obj) =>{
 
+					if(obj.name !== group.name()){
+						newObjects.push(obj)
+						return newObjects
+					}
+
+					let trajectories = obj.trajectories
+					for ( let i = trajectories.length - 1; i >= 0; --i) {
+							if (trajectories[i].time >= played){
+								if(i==0)
+									return newObjects;
+								if(trajectories[i-1].time >= played ){
+									trajectories.splice(i, 1);
+									continue;
+								}
+								let startTraj = trajectories[i-1], endTraj = trajectories[i]
+								let lapseTime = endTraj.time - startTraj.time;
+								let curTime = played - 1.e-18 - startTraj.time;
+								let xSlope = (endTraj.x - startTraj.x)/lapseTime, ySlope = (endTraj.y - startTraj.y)/lapseTime;
+								let x = xSlope * curTime + startTraj.x;
+								let y = ySlope * curTime + startTraj.y;
+								let widthSlope = (endTraj.width - startTraj.width)/lapseTime, heightSlope = (endTraj.height - startTraj.height)/lapseTime;
+								let width = widthSlope * curTime + startTraj.width
+								let height = heightSlope * curTime + startTraj.height
+								trajectories.splice(i, 1);
+								trajectories = [ ...obj.trajectories, {x: x, y: y, height: height, width: width, time: played - 1.e-18}];
+								break;
+							}
+					}
+					newObjects.push({ ...obj, exit: true, exitTime: played, trajectories: trajectories })
+					return newObjects
+					//return { ...obj, exit: true, exitTime: played, trajectories: trajectories };
+				}, [])
+			}
+		})
+	}
 	/* ==================== list ==================== */
 
 	handleListObjectDelete = name =>{
 		this.setState((prevState) => {
 				const objects = prevState.objects.filter( object => {
-
 					if(object.name !== name)
 						return true;
-
-
 					return false
 					});
-				console.log("-----------")
-				console.log(objects)
 				return { objects: objects };
 		});
 	}
@@ -315,6 +340,7 @@ class Edit extends Component {
 												onCanvasGroupDragEnd={this.handleCanvasGroupDragEnd}
 												onCanvasCircleDragMove={this.handleCanvasCircleDragMove}
 												onCanvasCircleDragEnd={this.handleCanvasCircleDragEnd}
+												onCanvasExitClick={this.handleCanvasExitClick}
 												/>
 							</div>
 						</Col>

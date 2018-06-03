@@ -12,7 +12,7 @@ export function fetch2DVideo(id){
 			const dummnyResponse = {
 				width: 640,
 				height: 480,
-				url: "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4"
+				url: "https://www.youtube.com/watch?v=ESXgJ9-H-2U"
 			}
 			resolve(dummnyResponse)
 		}).then(response => dispatch(receive2DVideo(id, response)))

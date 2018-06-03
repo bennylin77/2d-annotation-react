@@ -18,7 +18,7 @@ class List extends Component {
 										//console.log(obj)
 										let trajectories = [];
 										for( let t of obj.trajectories){
-											trajectories.push(<div key={t.time}>x: {t.x} y: {t.y} height: {t.height} width: {t.width} time: <Duration seconds={duration*t.time}/></div>)
+											trajectories.push(<div key={t.time}>x: {t.x} y: {t.y} height: {t.height} width: {t.width} time: <Duration seconds={duration*t.time}/> ({t.time})</div>)
 										}
 										return(	<ListGroupItem key={obj.name}>
 															{obj.name}<br/>

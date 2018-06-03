@@ -1,9 +1,7 @@
 import React, {Component} from 'react';
 import './Canvas.css';
-import { Stage, Layer, Rect, Group, Circle } from 'react-konva';
-import Konva from 'konva';
-
-
+import { Stage, Layer, Rect, Group, Circle, Label, Text, Tag } from 'react-konva';
+//import Konva from 'konva';
 
 class Canvas extends Component {
 
@@ -49,8 +47,6 @@ class Canvas extends Component {
 		const anchorX = activeAnchor.getX();
 		const anchorY = activeAnchor.getY();
 
-		//console.log(`x: ${anchorX}, y: ${anchorY}`)
-
 	  // update anchor positions
 		switch (activeAnchor.getName()) {
 			case 'topLeft':
@@ -78,7 +74,9 @@ class Canvas extends Component {
 		  rect.height(height);
 		}
 	}
-
+	handleExitClick = e =>{
+		this.props.onCanvasExitClick(e);
+	}
 	handle = e => {
 	}
 
@@ -86,11 +84,15 @@ class Canvas extends Component {
 	render() {
 		const { height, width, objects, played} = this.props;
 		const layerItems = [];
-
 		objects.forEach( obj => {
 			let trajectories = obj.trajectories
 			let rect;
 			let x, y, width, height
+
+			if(trajectories[0].time>played)
+				return;
+			if(obj.exit && obj.exitTime<=played)
+				return;
 			//console.log(`obj.trajectories size: ${obj.trajectories.length }`)
 
 			for( let i = 0; i < trajectories.length; i++){
@@ -127,8 +129,8 @@ class Canvas extends Component {
 			circles.push(<Circle x={width} y={0} key={'topRight'} name={'topRight'} stroke={'#000'} fill={'#ffffff'} strokeWidth={1} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
 			circles.push(<Circle x={width} y={height} key={'bottomRight'} name={'bottomRight'} stroke={'#000'} fill={'#ffffff'} strokeWidth={1} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
 			circles.push(<Circle x={0} y={height} key={'bottomLeft'} name={'bottomLeft'} stroke={'#000'} fill={'#ffffff'} strokeWidth={1} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-
-			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}</Group>);
+			let exit = <Label onClick={this.handleExitClick} name={'exit'} x={width/2} y={-5}><Tag fill={'#fff'} pointerDirection={'down'} pointerWidth={10} pointerHeight={10} lineJoin={'round'} ></Tag><Text fontFamily={'Calibri'} text={'Exit'} fontSize={18} lineHeight={1.2} width={50} align={'center'} fill={'black'} ></Text></Label>
+			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}{exit}</Group>)
 		});
 
 		return(
