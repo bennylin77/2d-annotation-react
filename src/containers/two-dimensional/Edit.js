@@ -212,8 +212,8 @@ class Edit extends Component {
 			})
 		}
 	}
-	handleCanvasCircleDragMove = e =>{
-	}
+	handleCanvasCircleDragMove = e =>{}
+
 	handleCanvasExitClick = e => {
 		const group = e.target.getParent().getParent()
 		this.setState((prevState, props) => {
@@ -242,20 +242,87 @@ class Edit extends Component {
 					}
 					newObjects.push({ ...obj, exit: true, exitTime: played, trajectories: trajectories })
 					return newObjects
-					//return { ...obj, exit: true, exitTime: played, trajectories: trajectories };
 				}, [])
 			}
 		})
 	}
 
+
+	handleCanvasSplitClick = e =>{
+		const group = e.target.getParent().getParent();
+		const childName1 = (new Date()).getTime();
+		const childName2 = (new Date()).getTime()+1;
+		const childStroke1 = colors[getRandomInt(3)]
+		const childStroke2 = colors[getRandomInt(3)]
+		const childTrajectories1 = []
+		const childTrajectories2 = []
+		let exChildName1, exChildName2
+		let parentX, parentY, parentWidth, parentHeight
+		let error = false
+		this.setState((prevState, props) => {
+			const played = prevState.played
+			let objects = prevState.objects.map( obj =>{
+				if(obj.name !== group.name())
+					return obj;
+				let trajectories = obj.trajectories
+				exChildName1 = obj.children[0]
+				exChildName2 = obj.children[1]
+				parentX = trajectories[trajectories.length-1].x
+				parentY = trajectories[trajectories.length-1].y
+				parentWidth = trajectories[trajectories.length-1].width
+				parentHeight = trajectories[trajectories.length-1].height
+				for ( let i = trajectories.length - 1; i >= 0; --i) {
+						if (trajectories[i].time >= played){
+							if(i===0){
+								error = true;
+								return obj;
+							}
+							if(trajectories[i-1].time >= played ){
+								trajectories.splice(i, 1);
+								continue;
+							}
+							let interpoArea = interpolationArea( { startTraj: trajectories[i-1], endTraj: trajectories[i], played: played })
+							let interpoPos = interpolationPosition( { startTraj: trajectories[i-1], endTraj: trajectories[i], played: played })
+							parentX = interpoPos.x;
+							parentY = interpoPos.y;
+							parentWidth = interpoArea.width;
+							parentHeight = interpoArea.height;
+							let currentTimeOffset = 1.e-18
+							interpoArea = interpolationArea({startTraj: trajectories[i-1], endTraj: trajectories[i], played: played, currentTimeOffset: currentTimeOffset})
+							interpoPos = interpolationPosition({startTraj: trajectories[i-1], endTraj: trajectories[i], played: played, currentTimeOffset: currentTimeOffset})
+							trajectories.splice(i, 1);
+							trajectories = [ ...obj.trajectories, {x: interpoPos.x, y: interpoPos.y, height: interpoArea.height, width: interpoArea.width, time: played - currentTimeOffset}];
+							break;
+						}
+				}
+				return { ...obj, exit: true, exitTime: played, trajectories: trajectories, children: [`${childName1}`, `${childName2}`]};
+			})
+
+			if(!error){
+			 	objects = objects.filter(obj => {
+					if(obj.name!==exChildName1 && obj.name!==exChildName2)
+						return true
+					return false
+				})
+				childTrajectories1.push({x: parentX+10, y: parentY+10, height: parentHeight, width: parentWidth, time: played})
+				childTrajectories2.push({x: parentX+20, y: parentY+20, height: parentHeight, width: parentWidth, time: played})
+				objects.push({name: `${childName1}`, stroke: childStroke1, trajectories: childTrajectories1, dragging: false, exit: false, exitTime: 0, children:[], parent: group.name() })
+				objects.push({name: `${childName2}`, stroke: childStroke2, trajectories: childTrajectories2, dragging: false, exit: false, exitTime: 0, children:[], parent: group.name() })
+			}
+
+			return { objects: objects};
+		})
+
+
+	}
+
+
 	handleCanvasForkClick = e => {
 		const group = e.target.getParent().getParent()
-
 		const childName = (new Date()).getTime();
 		const childStroke = colors[getRandomInt(3)]
 		const childTrajectories = []
 		let parentX, parentY, parentWidth, parentHeight
-
 		this.setState((prevState, props) => {
 			const played = prevState.played
 			let objects = prevState.objects.map( obj =>{
@@ -269,22 +336,32 @@ class Edit extends Component {
 							continue;
 
 						if(i===trajectories.length-1){
-							parentX = trajectories[i].x, parentY = trajectories[i].y, parentWidth = trajectories[i].width, parentHeight = trajectories[i].height
+							parentX = trajectories[i].x;
+							parentY = trajectories[i].y;
+							parentWidth = trajectories[i].width;
+							parentHeight = trajectories[i].height;
 							break;
 						}
 						let interpoArea = interpolationArea( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
 						let interpoPos = interpolationPosition( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
-						parentX = interpoPos.x, parentY = interpoPos.y, parentWidth = interpoArea.width, parentHeight = interpoArea.height
+						parentX = interpoPos.x;
+						parentY = interpoPos.y;
+						parentWidth = interpoArea.width;
+						parentHeight = interpoArea.height;
 						break;
 					}
 				}
-				console.log([...obj.children, `${childName}`])
 				return { ...obj, children: [...obj.children, `${childName}`]};
 			})
 			childTrajectories.push({x: parentX+10, y: parentY+10, height: parentHeight, width: parentWidth, time: played})
 			return { objects: [...objects, {name: `${childName}`, stroke: childStroke, trajectories: childTrajectories, dragging: false, exit: false, exitTime: 0, children:[], parent: group.name() }]};
 		})
 	}
+
+
+
+
+
 	/* ==================== list ==================== */
 
 	handleListObjectDelete = name =>{
@@ -336,6 +413,7 @@ class Edit extends Component {
 												onCanvasCircleDragEnd={this.handleCanvasCircleDragEnd}
 												onCanvasExitClick={this.handleCanvasExitClick}
 												onCanvasForkClick={this.handleCanvasForkClick}
+												onCanvasSplitClick={this.handleCanvasSplitClick}
 												/>
 							</div>
 						</Col>

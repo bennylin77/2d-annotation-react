@@ -74,6 +74,9 @@ class Canvas extends Component {
 	handleForkClick = e =>{
 		this.props.onCanvasForkClick(e);
 	}
+	handleSplitClick = e =>{
+		this.props.onCanvasSplitClick(e);
+	}
 	//for testing
 	handle = e => {}
 
@@ -117,7 +120,8 @@ class Canvas extends Component {
 			circles.push(<Circle x={0} y={height} key={'bottomLeft'} name={'bottomLeft'} stroke={obj.stroke} fill={obj.stroke} strokeWidth={0} radius={6} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
 			let exit = <Label onClick={this.handleExitClick} name={'exit'} x={width/2-30} y={-5}><Tag fill={obj.stroke} pointerDirection={'down'} pointerWidth={10} pointerHeight={10} lineJoin={'round'} ></Tag><Text fontFamily={'Calibri'} text={'Exit'} fontSize={18} lineHeight={1.2} width={50} align={'center'} fill={'#fff'} ></Text></Label>
 			let fork = <Label onClick={this.handleForkClick} name={'fork'} x={width/2+40} y={-5}><Tag fill={obj.stroke} pointerDirection={'down'} pointerWidth={10} pointerHeight={10} lineJoin={'round'} ></Tag><Text fontFamily={'Calibri'} text={'Fork'} fontSize={18} lineHeight={1.2} width={50} align={'center'} fill={'#fff'} ></Text></Label>
-			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}{exit}{fork}</Group>)
+			let split = <Label onClick={this.handleSplitClick} name={'split'} x={width/2+100} y={-5}><Tag fill={obj.stroke} pointerDirection={'down'} pointerWidth={10} pointerHeight={10} lineJoin={'round'} ></Tag><Text fontFamily={'Calibri'} text={'Split'} fontSize={18} lineHeight={1.2} width={50} align={'center'} fill={'#fff'} ></Text></Label>
+			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}{exit}{fork}{split}</Group>)
 		});
 
 		return(
