@@ -12,7 +12,7 @@ export function fetch2DVideo(id){
 			const dummnyResponse = {
 				width: 640,
 				height: 480,
-				url: "https://www.youtube.com/watch?v=ESXgJ9-H-2U"
+				url: "https://cildata.crbs.ucsd.edu/media/videos/11952/11952_web.mp4"
 			}
 			resolve(dummnyResponse)
 		}).then(response => dispatch(receive2DVideo(id, response)))

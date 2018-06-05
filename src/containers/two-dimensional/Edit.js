@@ -4,6 +4,7 @@ import Slider from '../../components/two-dimensional/player/Slider';
 import Duration from '../../components/two-dimensional/player/Duration';
 import Canvas from '../../components/two-dimensional/canvas/Canvas';
 import List from '../../components/two-dimensional/list/List';
+import {colors, getRandomInt, interpolationArea, interpolationPosition} from '../../components/two-dimensional/helper.js';
 import { fetch2DVideo, editAndFetch2DVideoIfNeeded } from '../../actions/twoDimensionalActions.js';
 import { connect } from 'react-redux';
 import { Container, Row, Col, Button} from 'reactstrap';
@@ -37,7 +38,6 @@ class Edit extends Component {
 		if (!this.state.seeking) {
 			const played = state.played
 			this.setState((prevState, props) => {
-				//return { played: played, objects: setGroupXY(played, prevState.objects)}
 				return { played: played }
 			})
 		}
@@ -59,7 +59,6 @@ class Edit extends Component {
 	handleSliderChange = e => {
 			const played = parseFloat(e.target.value);
 			this.setState((prevState, props) => {
-				//return { played: played, objects: setGroupXY(played, prevState.objects)}
 				return { played: played }
 			})
 	}
@@ -114,41 +113,27 @@ class Edit extends Component {
 			return { playing: false, objects: prevState.objects.map( obj =>{
 					if(obj.name !== target.name())
 						return obj;
-
+						
 					let trajectories = obj.trajectories
 					for( let i = 0; i < trajectories.length; i++){
 						if(played >= trajectories[i].time){
 							//skip elapsed trajectories
 							if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 								continue;
-
 							if(played===trajectories[i].time){
 								trajectories[i].x = x; trajectories[i].y = y;
 								trajectories[i].width = trajectories[i].width; trajectories[i].height = trajectories[i].height;
 								break;
 							}
 							if(i===trajectories.length-1){
-								trajectories = [ ...obj.trajectories, {x: x, y: y, height: trajectories[i].height, width: trajectories[i].width, time: played}];
+								trajectories.push({x: x, y: y, height: trajectories[i].height, width: trajectories[i].width, time: played});
 								break;
 							}
-							let startTraj = trajectories[i], endTraj = trajectories[i+1]
-							let lapseTime = endTraj.time - startTraj.time;
-							let curTime = played - startTraj.time;
-							let widthSlope = (endTraj.width - startTraj.width)/lapseTime, heightSlope = (endTraj.height - startTraj.height)/lapseTime;
-							let width = widthSlope * curTime + startTraj.width
-							let height = heightSlope * curTime + startTraj.height
-							trajectories = [ ...obj.trajectories, {x: x, y: y, height: height, width: width, time: played}];
+							let interpoArea = interpolationArea( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
+							trajectories.splice(i+1, 0, {x: x, y: y, height: interpoArea.height, width: interpoArea.width, time: played});
 							break;
 						}
 					}
-
-					//the trajectories sorded by the time
-					trajectories.sort(function(a, b) {
-					  const timeA = a.time, timeB = b.time;
-					  if (timeA < timeB) return -1;
-					  if (timeA > timeB) return 1;
-					  return 0;
-					});
 					return { ...obj, dragging: false, trajectories: trajectories};
 				})
 			}
@@ -193,55 +178,40 @@ class Edit extends Component {
 								if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 									continue;
 
-								let originalX = trajectories[i].x;
-								let originalY = trajectories[i].y;
-								let newX, newY;
+								let xCorrection, yCorrection
 								if(topLeft.x()<topRight.x() && topLeft.y()<bottomLeft.y()){
-									newX = originalX + topLeft.x()
-									newY = originalY + topLeft.y()
+									xCorrection = topLeft.x()
+									yCorrection = topLeft.y()
 									console.log('topLeft')
 								}else if(topRight.x()<topLeft.x() && topRight.y()<bottomLeft.y()){
-									newX = originalX + topRight.x()
-									newY = originalY + topRight.y()
+									xCorrection = topRight.x()
+									yCorrection = topRight.y()
 									console.log('topRight')
 								}else if(bottomLeft.x()<topRight.x() && bottomLeft.y()<topLeft.y()){
-									newX = originalX + bottomLeft.x()
-									newY = originalY + bottomLeft.y()
+									xCorrection = bottomLeft.x()
+									yCorrection = bottomLeft.y()
 									console.log('bottomLeft')
 								}else if(bottomRight.x()<bottomLeft.x() && bottomRight.y()<topRight.y()){
-									newX = originalX + bottomRight.x()
-									newY = originalY + bottomRight.y()
+									xCorrection = bottomRight.x()
+									yCorrection = bottomRight.y()
 									console.log('bottomRight')
 								}
 								if(played===trajectories[i].time){
-									trajectories[i].x=newX;
-									trajectories[i].y=newY;
+									trajectories[i].x+=xCorrection;
+									trajectories[i].y+=yCorrection;
 									trajectories[i].width=width;
 									trajectories[i].height=height;
 									break;
 								}
 								if(i===trajectories.length-1){
-									trajectories = [ ...obj.trajectories, {x: newX, y: newY, height: height, width: width, time: played}];
+									trajectories.push({x: trajectories[i].x+xCorrection, y: trajectories[i].y+yCorrection, height: height, width: width, time: played});
 									break;
 								}
-								let startTraj = trajectories[i], endTraj = trajectories[i+1]
-								let lapseTime = endTraj.time - startTraj.time;
-								let xSlope = (endTraj.x - startTraj.x)/lapseTime, ySlope = (endTraj.y - startTraj.y)/lapseTime;
-								// set x and y position
-								let curTime = played - startTraj.time;
-								newX = xSlope * curTime + newX;
-								newY = ySlope * curTime + newY;
-								trajectories = [ ...obj.trajectories, {x: newX, y: newY, height: height, width: width, time: played}];
+								let interpoPos = interpolationPosition( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played, startTrajXCorrection: xCorrection, startTrajYCorrection: yCorrection})
+								trajectories.splice( i+1, 0, {x: interpoPos.x, y: interpoPos.y, height: height, width: width, time: played})
 								break;
 							}
 						}
-						//the trajectories sorded by the time
-						trajectories.sort(function(a, b) {
-							const timeA = a.time, timeB = b.time;
-							if (timeA < timeB) return -1;
-							if (timeA > timeB) return 1;
-							return 0;
-						});
 						return { ...obj, trajectories: trajectories};
 					})
 				}
@@ -264,23 +234,17 @@ class Edit extends Component {
 					let trajectories = obj.trajectories
 					for ( let i = trajectories.length - 1; i >= 0; --i) {
 							if (trajectories[i].time >= played){
-								if(i==0)
+								if(i===0)
 									return newObjects;
 								if(trajectories[i-1].time >= played ){
 									trajectories.splice(i, 1);
 									continue;
 								}
-								let startTraj = trajectories[i-1], endTraj = trajectories[i]
-								let lapseTime = endTraj.time - startTraj.time;
-								let curTime = played - 1.e-18 - startTraj.time;
-								let xSlope = (endTraj.x - startTraj.x)/lapseTime, ySlope = (endTraj.y - startTraj.y)/lapseTime;
-								let x = xSlope * curTime + startTraj.x;
-								let y = ySlope * curTime + startTraj.y;
-								let widthSlope = (endTraj.width - startTraj.width)/lapseTime, heightSlope = (endTraj.height - startTraj.height)/lapseTime;
-								let width = widthSlope * curTime + startTraj.width
-								let height = heightSlope * curTime + startTraj.height
+								let currentTimeOffset = 1.e-18
+								let interpoArea = interpolationArea({startTraj: trajectories[i-1], endTraj: trajectories[i], played: played, currentTimeOffset: currentTimeOffset})
+								let interpoPos = interpolationPosition({startTraj: trajectories[i-1], endTraj: trajectories[i], played: played, currentTimeOffset: currentTimeOffset})
 								trajectories.splice(i, 1);
-								trajectories = [ ...obj.trajectories, {x: x, y: y, height: height, width: width, time: played - 1.e-18}];
+								trajectories = [ ...obj.trajectories, {x: interpoPos.x, y: interpoPos.y, height: interpoArea.height, width: interpoArea.width, time: played - currentTimeOffset}];
 								break;
 							}
 					}
@@ -371,11 +335,6 @@ class Edit extends Component {
 			</Container>
     );
   }
-}
-
-const colors = ["rgba(3, 169, 244, 0.7)", "rgba(244, 67, 54, 0.7)", "rgba(233, 30, 99, 0.7)"]
-const getRandomInt = max => {
-  return Math.floor(Math.random() * Math.floor(max));
 }
 
 //connect
