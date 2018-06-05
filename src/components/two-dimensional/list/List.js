@@ -23,6 +23,8 @@ class List extends Component {
 										return(	<ListGroupItem key={obj.name}>
 															{obj.name}<br/>
 															{obj.stroke}<br/>
+															{obj.parent}<br/>
+															{obj.children.join(":")}<br/>
 															{trajectories}
 															<Button outline color="danger" className="float-right" onClick={()=>this.handleDelete(obj.name)}>Delete</Button>
 														</ListGroupItem>)

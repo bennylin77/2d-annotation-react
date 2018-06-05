@@ -80,15 +80,14 @@ class Edit extends Component {
 		const trajectories = []
 		this.setState((prevState, props) => {
 			trajectories.push({x: position.x, y: position.y, height: 1, width: 1, time: prevState.played})
-			return { adding: !prevState.adding, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false, exit: false, exitTime: 0}]};
+			return { adding: !prevState.adding, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false, exit: false, exitTime: 0, children:[], parent: '' }]};
 		}, () => {
 			const group = stage.find(`.${name}`)[0]
 			const bottomRight = group.get('.bottomRight')[0]
 			bottomRight.startDrag()
 		});
 	}
-	handleCanvasStageMouseUp = e => {
-	}
+	handleCanvasStageMouseUp = e => {}
 	handleCanvasGroupMouseDown = e =>{
 		//when user drag a object, pause the video
 		this.setState({playing: false});
@@ -113,7 +112,6 @@ class Edit extends Component {
 			return { playing: false, objects: prevState.objects.map( obj =>{
 					if(obj.name !== target.name())
 						return obj;
-						
 					let trajectories = obj.trajectories
 					for( let i = 0; i < trajectories.length; i++){
 						if(played >= trajectories[i].time){
@@ -152,7 +150,6 @@ class Edit extends Component {
 	}
 
 	handleCanvasCircleDragEnd = e =>{
-
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
 		group.draggable(true)
@@ -163,7 +160,6 @@ class Edit extends Component {
 		let bottomLeft = group.get('.bottomLeft')[0];
 		let width = Math.abs(topRight.x() - topLeft.x());
 		let height =  Math.abs(bottomLeft.y() - topLeft.y());
-
 		if(width && height) {
 			this.setState((prevState, props) => {
 				const played = prevState.played
@@ -171,13 +167,11 @@ class Edit extends Component {
 						if(obj.name !== group.name())
 							return obj;
 						let trajectories = obj.trajectories
-
 						for( let i = 0; i < trajectories.length; i++){
 							if(played >= trajectories[i].time){
 								//skip elapsed trajectories
 								if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 									continue;
-
 								let xCorrection, yCorrection
 								if(topLeft.x()<topRight.x() && topLeft.y()<bottomLeft.y()){
 									xCorrection = topLeft.x()
@@ -225,12 +219,10 @@ class Edit extends Component {
 		this.setState((prevState, props) => {
 			const played = prevState.played
 			return { objects: prevState.objects.reduce( (newObjects, obj) =>{
-
 					if(obj.name !== group.name()){
 						newObjects.push(obj)
 						return newObjects
 					}
-
 					let trajectories = obj.trajectories
 					for ( let i = trajectories.length - 1; i >= 0; --i) {
 							if (trajectories[i].time >= played){
@@ -253,6 +245,44 @@ class Edit extends Component {
 					//return { ...obj, exit: true, exitTime: played, trajectories: trajectories };
 				}, [])
 			}
+		})
+	}
+
+	handleCanvasForkClick = e => {
+		const group = e.target.getParent().getParent()
+
+		const childName = (new Date()).getTime();
+		const childStroke = colors[getRandomInt(3)]
+		const childTrajectories = []
+		let parentX, parentY, parentWidth, parentHeight
+
+		this.setState((prevState, props) => {
+			const played = prevState.played
+			let objects = prevState.objects.map( obj =>{
+				if(obj.name !== group.name())
+					return obj;
+				let trajectories = obj.trajectories
+				for(let i=0; i<trajectories.length ;i++){
+					if(played >= trajectories[i].time){
+						//skip elapsed trajectories
+						if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
+							continue;
+
+						if(i===trajectories.length-1){
+							parentX = trajectories[i].x, parentY = trajectories[i].y, parentWidth = trajectories[i].width, parentHeight = trajectories[i].height
+							break;
+						}
+						let interpoArea = interpolationArea( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
+						let interpoPos = interpolationPosition( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
+						parentX = interpoPos.x, parentY = interpoPos.y, parentWidth = interpoArea.width, parentHeight = interpoArea.height
+						break;
+					}
+				}
+				console.log([...obj.children, `${childName}`])
+				return { ...obj, children: [...obj.children, `${childName}`]};
+			})
+			childTrajectories.push({x: parentX+10, y: parentY+10, height: parentHeight, width: parentWidth, time: played})
+			return { objects: [...objects, {name: `${childName}`, stroke: childStroke, trajectories: childTrajectories, dragging: false, exit: false, exitTime: 0, children:[], parent: group.name() }]};
 		})
 	}
 	/* ==================== list ==================== */
@@ -305,6 +335,7 @@ class Edit extends Component {
 												onCanvasCircleDragMove={this.handleCanvasCircleDragMove}
 												onCanvasCircleDragEnd={this.handleCanvasCircleDragEnd}
 												onCanvasExitClick={this.handleCanvasExitClick}
+												onCanvasForkClick={this.handleCanvasForkClick}
 												/>
 							</div>
 						</Col>
@@ -336,7 +367,6 @@ class Edit extends Component {
     );
   }
 }
-
 //connect
 function mapStateToProps(state) {
   const { editing, lists: {twoDimensionalVideoList} }= state
