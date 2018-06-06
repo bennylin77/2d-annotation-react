@@ -246,8 +246,6 @@ class Edit extends Component {
 			}
 		})
 	}
-
-
 	handleCanvasSplitClick = e =>{
 		const group = e.target.getParent().getParent();
 		const childName1 = (new Date()).getTime();
@@ -297,7 +295,6 @@ class Edit extends Component {
 				}
 				return { ...obj, exit: true, exitTime: played, trajectories: trajectories, children: [`${childName1}`, `${childName2}`]};
 			})
-
 			if(!error){
 			 	objects = objects.filter(obj => {
 					if(obj.name!==exChildName1 && obj.name!==exChildName2)
@@ -309,14 +306,9 @@ class Edit extends Component {
 				objects.push({name: `${childName1}`, stroke: childStroke1, trajectories: childTrajectories1, dragging: false, exit: false, exitTime: 0, children:[], parent: group.name() })
 				objects.push({name: `${childName2}`, stroke: childStroke2, trajectories: childTrajectories2, dragging: false, exit: false, exitTime: 0, children:[], parent: group.name() })
 			}
-
 			return { objects: objects};
 		})
-
-
 	}
-
-
 	handleCanvasForkClick = e => {
 		const group = e.target.getParent().getParent()
 		const childName = (new Date()).getTime();

@@ -15,6 +15,7 @@ class Canvas extends Component {
 		this.props.onCanvasStageMouseUp(e);
 	}
 	handleGroupMouseDown = e => {
+		e.target.findAncestor('Group').moveToTop()
 	  this.props.onCanvasGroupMouseDown(e);
 	}
 	handleGroupDragStart = e => {
@@ -27,9 +28,9 @@ class Canvas extends Component {
     this.props.onCanvasGroupRef(r);
   }
 	handleCircleMouseDown = e => {
-		const target = e.target
-		target.getParent().draggable(false)
-		target.moveToTop()
+		e.target.getParent().draggable(false)
+		e.target.moveToTop()
+		e.target.findAncestor('Group').moveToTop()
 	}
 	handleCircleDragEnd = e => {
 		this.props.onCanvasCircleDragEnd(e)
@@ -121,7 +122,8 @@ class Canvas extends Component {
 			let exit = <Label onClick={this.handleExitClick} name={'exit'} x={width/2-30} y={-5}><Tag fill={obj.stroke} pointerDirection={'down'} pointerWidth={10} pointerHeight={10} lineJoin={'round'} ></Tag><Text fontFamily={'Calibri'} text={'Exit'} fontSize={18} lineHeight={1.2} width={50} align={'center'} fill={'#fff'} ></Text></Label>
 			let fork = <Label onClick={this.handleForkClick} name={'fork'} x={width/2+40} y={-5}><Tag fill={obj.stroke} pointerDirection={'down'} pointerWidth={10} pointerHeight={10} lineJoin={'round'} ></Tag><Text fontFamily={'Calibri'} text={'Fork'} fontSize={18} lineHeight={1.2} width={50} align={'center'} fill={'#fff'} ></Text></Label>
 			let split = <Label onClick={this.handleSplitClick} name={'split'} x={width/2+100} y={-5}><Tag fill={obj.stroke} pointerDirection={'down'} pointerWidth={10} pointerHeight={10} lineJoin={'round'} ></Tag><Text fontFamily={'Calibri'} text={'Split'} fontSize={18} lineHeight={1.2} width={50} align={'center'} fill={'#fff'} ></Text></Label>
-			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}{exit}{fork}{split}</Group>)
+			let name = <Text y={height} fontFamily={'Calibri'} text={obj.name} fontSize={12} lineHeight={1.2} fill={'#fff'} ></Text>
+			layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}{exit}{fork}{split}{name}</Group>)
 		});
 
 		return(
