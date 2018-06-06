@@ -13,7 +13,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 class Edit extends Component {
   constructor(props) {
      super(props);
-		 this.state = { played: 0, playing: false, duration: 0, loop: false, seeking: false, adding: false, objects: []};
+		 this.state = { played: 0, playing: false, duration: 0, loop: false, seeking: false, adding: false, focusing: "", objects: []};
    }
   componentDidMount() {
     const { dispatch } = this.props;
@@ -80,7 +80,7 @@ class Edit extends Component {
 		const trajectories = []
 		this.setState((prevState, props) => {
 			trajectories.push({x: position.x, y: position.y, height: 1, width: 1, time: prevState.played})
-			return { adding: !prevState.adding, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false, exit: false, exitTime: 0, children:[], parent: '' }]};
+			return { adding: !prevState.adding, focusing: `${name}`, objects: [...prevState.objects, {name: `${name}`, stroke: stroke, trajectories: trajectories, dragging: false, exit: false, exitTime: 0, children:[], parent: '' }]};
 		}, () => {
 			const group = stage.find(`.${name}`)[0]
 			const bottomRight = group.get('.bottomRight')[0]
@@ -90,7 +90,8 @@ class Edit extends Component {
 	handleCanvasStageMouseUp = e => {}
 	handleCanvasGroupMouseDown = e =>{
 		//when user drag a object, pause the video
-		this.setState({playing: false});
+		const group = e.target.findAncestor('Group')
+		this.setState({playing: false, focusing: group.name()});
 	}
 	handleCanvasGroupDragStart = e =>{
 		const target = e.target
@@ -148,7 +149,12 @@ class Edit extends Component {
 			}
 		})*/
 	}
+	handleCanvasCircleMouseDown = e =>{
+		const group = e.target.findAncestor('Group')
+		console.log(group.name())
+		this.setState({focusing: group.name()})
 
+	}
 	handleCanvasCircleDragEnd = e =>{
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
@@ -369,7 +375,7 @@ class Edit extends Component {
 
 
   render() {
-		const {	playing, played, duration, adding, objects} = this.state;
+		const {	playing, played, duration, adding, focusing, objects} = this.state;
     const { editing, twoDimensionalVideoList } = this.props
 		const { id } = this.props.match.params
 		const video = twoDimensionalVideoList[id]
@@ -394,6 +400,7 @@ class Edit extends Component {
 												height = {video.height}
 												objects= {objects}
 												played = {played}
+												focusing = {focusing}
 												onCanvasStageMouseMove={this.handleCanvasStageMouseMove}
 												onCanvasStageMouseDown={this.handleCanvasStageMouseDown}
 												onCanvasStageMouseUp={this.handleCanvasStageMouseUp}
@@ -401,6 +408,7 @@ class Edit extends Component {
 												onCanvasGroupMouseDown={this.handleCanvasGroupMouseDown}
 												onCanvasGroupDragStart={this.handleCanvasGroupDragStart}
 												onCanvasGroupDragEnd={this.handleCanvasGroupDragEnd}
+												onCanvasCircleMouseDown={this.handleCanvasCircleMouseDown}
 												onCanvasCircleDragMove={this.handleCanvasCircleDragMove}
 												onCanvasCircleDragEnd={this.handleCanvasCircleDragEnd}
 												onCanvasExitClick={this.handleCanvasExitClick}

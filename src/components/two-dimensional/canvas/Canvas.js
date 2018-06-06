@@ -15,6 +15,8 @@ class Canvas extends Component {
 		this.props.onCanvasStageMouseUp(e);
 	}
 	handleGroupMouseDown = e => {
+		//console.log(e.target.stroke())
+		//e.target.fill(e.target.stroke())
 		e.target.findAncestor('Group').moveToTop()
 	  this.props.onCanvasGroupMouseDown(e);
 	}
@@ -28,9 +30,11 @@ class Canvas extends Component {
     this.props.onCanvasGroupRef(r);
   }
 	handleCircleMouseDown = e => {
-		e.target.getParent().draggable(false)
+		const group = e.target.findAncestor('Group')
+		group.draggable(false)
+		group.moveToTop()
 		e.target.moveToTop()
-		e.target.findAncestor('Group').moveToTop()
+		this.props.onCanvasCircleMouseDown(e);
 	}
 	handleCircleDragEnd = e => {
 		this.props.onCanvasCircleDragEnd(e)
@@ -82,7 +86,7 @@ class Canvas extends Component {
 	handle = e => {}
 
 	render() {
-		const { height, width, objects, played} = this.props;
+		const { height, width, objects, played, focusing} = this.props;
 		const layerItems = [];
 		objects.forEach( obj => {
 			let trajectories = obj.trajectories
@@ -109,7 +113,9 @@ class Canvas extends Component {
 						width = interpoArea.width;
 						height = interpoArea.height;
 					}
-					rect = <Rect x={0} y={0} width={width} height={height} stroke={obj.stroke} strokeWidth={1}/>
+					let fill = (focusing===obj.name)? "rgba(0,0,0,.5)": ""
+					console.log(obj.name)
+					rect = <Rect x={0} y={0} fill={fill} width={width} height={height} stroke={obj.stroke} strokeWidth={1}/>
 					break;
 				}
 			}
