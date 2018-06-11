@@ -10,9 +10,9 @@ export function fetch2DVideo(id){
     dispatch(request2DVideo(id))
     return new Promise((resolve, reject) => {
 			const dummnyResponse = {
-				width: 640,
+				width: 848,
 				height: 480,
-				url: "https://cildata.crbs.ucsd.edu/media/videos/11952/11952_web.mp4"
+				url: "https://cildata.crbs.ucsd.edu/media/videos/15798/15798_web.mp4"
 			}
 			resolve(dummnyResponse)
 		}).then(response => dispatch(receive2DVideo(id, response)))

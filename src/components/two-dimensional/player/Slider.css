@@ -1,18 +1,9 @@
 /*player*/
 .player-slider{
 	position: relative;
-	margin-bottom: 1.5rem;
 }
-.player-slider .selected-range{
-	height: 10px;
-	width: 100%;
-	background: #ffc107;
-	opacity: .6;
-	position: absolute;
-	top: 20px;
-	/*left: 40%;*/
-}
-.player-slider input {
+
+.player-slider input[type='range'] {
 	-webkit-appearance: none;
 	width: 100%;
 	height: 15px;
@@ -24,21 +15,46 @@
 	transition: opacity .2s;
 }
 .player-slider input:hover {
-    opacity: 1;
+  opacity: 1;
 }
 .player-slider input::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		appearance: none;
-		width: 15px;
-		height: 15px;
-		border-radius: 50%;
-		background: #666666;
-		cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
+	width: 15px;
+  height: 15px;
+	border-radius: 50%;
+	background: rgb(0, 123, 255);
+	cursor: pointer;
+	/*
+	box-shadow: -80px 0 0 80px #43e5f7;
+	*/
 }
+
 .player-slider input::-moz-range-thumb {
-		width: 15px;
-		height: 15px;
-		border-radius: 50%;
-		background: #666666;
-		cursor: pointer;
+	width: 15px;
+	height: 15px;
+	border-radius: 50%;
+	background: rgb(0, 123, 255);
+	cursor: pointer;
+}
+
+
+
+
+
+
+
+/** FF*/
+input[type="range"]::-moz-range-progress {
+  background-color: #d3d3d3;
+}
+input[type="range"]::-moz-range-track {
+  background-color: rgb(0, 123, 255);
+}
+/* IE*/
+input[type="range"]::-ms-fill-lower {
+  background-color: #d3d3d3;
+}
+input[type="range"]::-ms-fill-upper {
+  background-color: rgb(0, 123, 255);
 }

@@ -1,7 +1,9 @@
 import React from 'react'
 export default function Duration ({ className, seconds }) {
+
+	const style = {fontFamily: "Courier"}
   return (
-    <time dateTime={`P${Math.round(seconds)}S`} className={className}>
+    <time dateTime={`P${Math.round(seconds)}S`} className={className} style={style}>
       {format(seconds)}
     </time>
   )
@@ -9,13 +11,14 @@ export default function Duration ({ className, seconds }) {
 const format = seconds => {
   const date = new Date(seconds * 1000)
   const hh = date.getUTCHours()
-  const mm = date.getUTCMinutes()
-  const ss = pad(date.getUTCSeconds())
+  const mm = pad(date.getUTCMinutes(), 2)
+  const ss = pad(date.getUTCSeconds(), 2)
+	const ms = pad(date.getUTCMilliseconds(), 3)
   if (hh) {
-    return `${hh}:${pad(mm)}:${ss}`
+    return `${hh}:${mm}:${ss}:${ms}`
   }
-  return `${mm}:${ss}`
+  return `${mm}:${ss}:${ms}`
 }
-const pad = string => {
-  return ('0' + string).slice(-2)
+const pad = (string, digits)=> {
+  return ('0'.repeat(digits-1) + string).slice(-digits)
 }
