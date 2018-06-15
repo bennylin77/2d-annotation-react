@@ -12,9 +12,9 @@ import Canvas from '../../components/two-dimensional/canvas/Canvas';
 import List from '../../components/two-dimensional/list/List';
 import UndoList from '../../components/two-dimensional/undo-list/UndoList';
 import {VideoObject, Trajectory } from '../../models/2DVideo.js';
-import {UndoState} from '../../models/UndoState.js';
-import {ADD_2D_VIDEO_OBJECT, DELETE_2D_VIDEO_OBJECT, SPLIT_2D_VIDEO_OBJECT, EXIT_2D_VIDEO_OBJECT} from '../../models/UndoState.js';
-import {SPLITED, HIDE, SHOW} from '../../models/2DVideo.js';
+import {UndoRedo} from '../../models/UndoRedo.js';
+import {ADD_2D_VIDEO_OBJECT, DELETE_2D_VIDEO_OBJECT, SPLIT_2D_VIDEO_OBJECT, EXIT_2D_VIDEO_OBJECT} from '../../models/UndoRedo.js';
+import {SPLITTED, HIDE, SHOW} from '../../models/2DVideo.js';
 import {colors, getRandomInt, interpolationArea, interpolationPosition} from '../../components/two-dimensional/helper.js';
 import { fetch2DVideo, editAndFetch2DVideoIfNeeded } from '../../actions/twoDimensionalActions.js';
 import { connect } from 'react-redux';
@@ -24,7 +24,8 @@ import 'bootstrap/dist/css/bootstrap.css';
 class Manager extends Component {
   constructor(props) {
      super(props);
-		 this.state = { played: 0, playing: false, duration: 0, loop: false, seeking: false, stage:{}, adding: false, focusing: "", objects: [], undoStates: []};
+		 this.state = { played: 0, playing: false, duration: 0, loop: false, seeking: false, stage:{}, adding: false, objectCounter: 0, focusing: "", objects: []};
+		 this.UndoRedo = new UndoRedo();
    }
   componentDidMount() {
     const { dispatch } = this.props;
@@ -95,14 +96,14 @@ class Manager extends Component {
 		const name = (new Date()).getTime().toString(36);
 		const color = colors[getRandomInt(colors.length)]
 		const trajectories = []
+		this.UndoRedo.save(this.state); // Undo/Redo
 		this.setState((prevState, props) => {
 			trajectories.push( new Trajectory({x: position.x, y: position.y, height: 1, width: 1, time: prevState.played}) )
-			return { adding: !prevState.adding, focusing: `${name}`, undoStates: [...prevState.undoStates, new UndoState({id: `${(new Date()).getTime()}`, type: ADD_2D_VIDEO_OBJECT, attrs: {name: `${name}`} })],
-			 				 objects: [...prevState.objects, new VideoObject({name: `${name}`, color: color, trajectories: trajectories})]};
+			return { adding: !prevState.adding, objectCounter: prevState.objectCounter+1, focusing: `${name}`, objects: [...prevState.objects, new VideoObject({id: prevState.objectCounter+1, name: `${name}`, color: color, trajectories: trajectories})]};
 		}, () => {
 			const group = stage.find(`.${name}`)[0]
 			const bottomRight = group.get('.bottomRight')[0]
-			bottomRight.startDrag()
+			bottomRight.startDrag();
 		});
 	}
 	handleCanvasStageMouseUp = e => {}
@@ -112,8 +113,18 @@ class Manager extends Component {
 	}
 	handleCanvasGroupDragStart = e =>{}
 	handleCanvasGroupDragEnd = e =>{
+		if(e.target.getClassName() != 'Group')
+			return;
 		const group = e.target
-		const position = e.target.position()
+		const rect = group.get('Rect')[0];
+		const topLeft = group.get('.topLeft')[0]
+		const position = topLeft.getAbsolutePosition()
+		//console.log();
+		//console.log(`group`);
+		//console.log(group);
+		//console.log(`group position: ${position.x}, ${position.y}`);
+
+
 		this.setState((prevState, props) => {
 			const played = prevState.played
 			return { playing: false, objects: prevState.objects.map( obj =>{
@@ -126,15 +137,15 @@ class Manager extends Component {
 							if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 								continue;
 							if(played===trajectories[i].time){
-								trajectories[i].x = position.x; trajectories[i].y = position.y;
+								trajectories[i].x = position.x; trajectories[i].y = position.y; trajectories[i].width = rect.width(); trajectories[i].height = rect.height();
 								break;
 							}
 							if(i===trajectories.length-1){
-								trajectories.push(new Trajectory({x: position.x, y: position.y, height: trajectories[i].height, width: trajectories[i].width, time: played}));
+								trajectories.push(new Trajectory({x: position.x, y: position.y, width: rect.width(), height: rect.height(), time: played}));
 								break;
 							}
-							let interpoArea = interpolationArea( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
-							trajectories.splice(i+1, 0, new Trajectory({x: position.x, y: position.y, height: interpoArea.height, width: interpoArea.width, time: played}));
+							//let interpoArea = interpolationArea( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
+							trajectories.splice(i+1, 0, new Trajectory({x: position.x, y: position.y, height: rect.height(), width: rect.width(), time: played}));
 							break;
 						}
 					}
@@ -144,12 +155,12 @@ class Manager extends Component {
 		})
 	}
 	handleCanvasGroupRef = r =>{}
-	handleCanvasCircleMouseDown = e =>{
+	handleCanvasDotMouseDown = e =>{
 		const group = e.target.findAncestor('Group')
 		this.setState({focusing: group.name()})
 	}
-	handleCanvasCircleDragMove = e =>{}
-	handleCanvasCircleDragEnd = e =>{
+	handleCanvasDotDragMove = e =>{}
+	handleCanvasDotDragEnd = e =>{
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
 		group.draggable(true)
@@ -175,19 +186,19 @@ class Manager extends Component {
 								if(topLeft.x() < topRight.x() && topLeft.y() < bottomLeft.y()){
 									xCorrection = topLeft.x();
 									yCorrection = topLeft.y();
-									console.log('topLeft')
+									//console.log('topLeft')
 								}else if(topRight.x() < topLeft.x() && topRight.y() < bottomLeft.y()){
 									xCorrection = topRight.x()
 									yCorrection = topRight.y()
-									console.log('topRight')
+									//console.log('topRight')
 								}else if(bottomLeft.x() < topRight.x() && bottomLeft.y() < topLeft.y()){
 									xCorrection = bottomLeft.x()
 									yCorrection = bottomLeft.y()
-									console.log('bottomLeft')
+									//console.log('bottomLeft')
 								}else if(bottomRight.x() < bottomLeft.x() && bottomRight.y() < topRight.y()){
 									xCorrection = bottomRight.x()
 									yCorrection = bottomRight.y()
-									console.log('bottomRight')
+									//console.log('bottomRight')
 								}
 								if(played === trajectories[i].time){
 									trajectories[i].x+=xCorrection;
@@ -212,6 +223,10 @@ class Manager extends Component {
 		}
 	}
 	/* ==================== list ==================== */
+	handleListObjectItemClick = name =>{
+		this.setState({focusing: name})
+	}
+
 	handleListTrajectoryJump = e => {
 		const name = e.name
 		const time = e.time
@@ -287,6 +302,8 @@ class Manager extends Component {
 							break;
 						}
 					}
+					if(status === HIDE )
+						Trajectory.clearDuplicateTrajectory(trajectories, status);
 					return { ...obj, trajectories: trajectories};
 				})
 			}
@@ -299,7 +316,7 @@ class Manager extends Component {
 		const childColor2 = colors[getRandomInt(colors.length)]
 		const childTrajectories1 = []
 		const childTrajectories2 = []
-		const status = SPLITED;
+		const status = SPLITTED;
 		let exChildName1, exChildName2
 		let parentX, parentY, parentWidth, parentHeight
 		this.setState((prevState, props) => {
@@ -347,14 +364,23 @@ class Manager extends Component {
 			})
 			childTrajectories1.push(new Trajectory({x: parentX+10, y: parentY+10, height: parentHeight, width: parentWidth, time: played}));
 			childTrajectories2.push(new Trajectory({x: parentX+20, y: parentY+20, height: parentHeight, width: parentWidth, time: played}));
-			objects.push(new VideoObject({name: `${childName1}`, color: childColor1, trajectories: childTrajectories1, parent: name }))
-			objects.push(new VideoObject({name: `${childName2}`, color: childColor2, trajectories: childTrajectories2, parent: name }))
-			return { objects: objects};
+			objects.push(new VideoObject({id: prevState.objectCounter+1, name: `${childName1}`, color: childColor1, trajectories: childTrajectories1, parent: name }))
+			objects.push(new VideoObject({id: prevState.objectCounter+2, name: `${childName2}`, color: childColor2, trajectories: childTrajectories2, parent: name }))
+			return { objectCounter: prevState.objectCounter+2, objects: objects};
+		})
+	}
+	/* ==================== undo/redo ==================== */
+	handleUndo = () =>{
+		this.setState((prevState, props) => {
+			const state = this.UndoRedo.undo(prevState);
+			console.log(`pop out:`)
+			console.log(state)
+			return {...state};
 		})
 	}
 
   render() {
-		const {	playing, played, duration, adding, focusing, objects, undoStates} = this.state;
+		const {	playing, played, duration, adding, focusing, objects } = this.state;
     const { editing, twoDimensionalVideoList } = this.props
 		const { id } = this.props.match.params
 		const video = twoDimensionalVideoList[id]
@@ -391,9 +417,9 @@ class Manager extends Component {
 														onCanvasGroupMouseDown={this.handleCanvasGroupMouseDown}
 														onCanvasGroupDragStart={this.handleCanvasGroupDragStart}
 														onCanvasGroupDragEnd={this.handleCanvasGroupDragEnd}
-														onCanvasCircleMouseDown={this.handleCanvasCircleMouseDown}
-														onCanvasCircleDragMove={this.handleCanvasCircleDragMove}
-														onCanvasCircleDragEnd={this.handleCanvasCircleDragEnd}
+														onCanvasDotMouseDown={this.handleCanvasDotMouseDown}
+														onCanvasDotDragMove={this.handleCanvasDotDragMove}
+														onCanvasDotDragEnd={this.handleCanvasDotDragEnd}
 														/>
 									</div>
 								</Col>
@@ -421,15 +447,18 @@ class Manager extends Component {
 					</Col>
 					<Col>
 							<div className="sticky-top">
-								<div className="pb-2">
-									<ButtonGroup>
-										<Button outline onClick={this.handleAddObject}><MdUndo/> Ubdo</Button>
-										<Button outline onClick={this.handleAddObject}><MdRedo/> Redo</Button>
-										<Button outline onClick={this.handleAddObject}><MdAdd/> {adding ? 'Adding Object' : 'Add Object'}</Button>
+								<div className="pb-2 clearfix">
+									<Button outline color="primary" onClick={this.handleAddObject} className="float-left"><MdAdd/> {adding ? 'Adding Object' : 'Add Object'}</Button>
+									<ButtonGroup className="float-right">
+										<Button outline onClick={this.handleUndo}><MdUndo/></Button>
+										<Button outline onClick={this.handleRedo}><MdRedo/></Button>
 									</ButtonGroup>
 								</div>
 								<List objects= {objects}
 											duration= {duration}
+											played = {played}
+											focusing = {focusing}
+											onListObjectItemClick = {this.handleListObjectItemClick}
 											onListObjectDelete= {this.handleListObjectDelete}
 											onListObjectShowHide={this.handleListObjectShowHide}
 											onListObjectSplit={this.handleListObjectSplit}

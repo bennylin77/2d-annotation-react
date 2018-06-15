@@ -1,10 +1,14 @@
 import React, {Component} from 'react';
 import './Canvas.css';
-import { Stage, Layer, Rect, Group, Circle, Text} from 'react-konva';
+import { Stage, Layer, Rect, Group, Text} from 'react-konva';
 import {SHOW} from '../../../models/2DVideo.js';
 import {interpolationArea, interpolationPosition} from '../helper.js';
 
 class Canvas extends Component {
+	constructor(props){
+		super(props)
+		this.state = {dotLength: 6}
+	}
 	handleStageRef = r =>{
 		this.props.onCanvasStageRef(r);
 	}
@@ -24,71 +28,196 @@ class Canvas extends Component {
 	handleGroupDragStart = e => {
 		this.props.onCanvasGroupDragStart(e);
 	}
+	handleGroupDragMove = e => {
+		if(e.target.getClassName() != 'Group')
+			return;
+		const group = e.target;
+		const {width, height} = this.props
+		const topLeft = group.get('.topLeft')[0], topRight = group.get('.topRight')[0], bottomRight = group.get('.bottomRight')[0], bottomLeft = group.get('.bottomLeft')[0];
+		const top = group.get('.top')[0], left = group.get('.left')[0], right = group.get('.right')[0], bottom = group.get('.bottom')[0];
+		const rect = group.get('Rect')[0];
+		const text = group.get('Text')[0];
+		let resizedWidth, resizedHeight;
+		let absX, absY;
+		let activeAnchor;
+		//boundary
+		for(let dot of [topLeft, topRight, bottomRight, bottomLeft, top, bottom, left, right]){
+			absX = dot.getAbsolutePosition().x
+			absY = dot.getAbsolutePosition().y
+			if(dot.getName()==='topRight' || dot.getName()==='right' || dot.getName()==='bottomRight'){
+				absX = absX < 1 ? 1:absX;
+			}
+			if(dot.getName()==='top' || dot.getName()==='bottom' || dot.getName()==='left' || dot.getName()==='topLeft' || dot.getName()==='bottomLeft'){
+				absX = absX < 0 ? 0:absX;
+			}
+			if(dot.getName()==='bottomLeft' || dot.getName()==='bottom' || dot.getName()==='bottomRight'){
+				absY = absY < 1 ? 1:absY;
+			}
+			if(dot.getName()==='right' || dot.getName()==='left' || dot.getName()==='top' || dot.getName()==='topLeft' || dot.getName()==='topRight'){
+				absY = absY < 0 ? 0:absY;
+			}
+			if(dot.getName()==='topLeft' || dot.getName()==='left' || dot.getName()==='bottomLeft'){
+				absX = absX < width-1 ? absX:width-1;
+			}
+			if(dot.getName()==='top' || dot.getName()==='bottom' || dot.getName()==='right' || dot.getName()==='topRight' || dot.getName()==='bottomRight'){
+				absX = absX < width ? absX:width;
+			}
+			if(dot.getName()==='topLeft' || dot.getName()==='top' || dot.getName()==='topRight'){
+				absY = absY < height-1 ? absY:height-1;
+			}
+			if(dot.getName()==='left' || dot.getName()==='right' || dot.getName()==='bottom' || dot.getName()==='bottomLeft' || dot.getName()==='bottomRight'){
+				absY = absY < height ? absY:height;
+			}
+			dot.setAbsolutePosition({x: absX, y:absY})
+		}
+		activeAnchor = topLeft;
+		const anchorX = activeAnchor.getX();
+		const anchorY = activeAnchor.getY();
+		topRight.y(anchorY); top.y(anchorY); bottomLeft.x(anchorX); left.x(anchorX);
+		resizedHeight = bottomRight.y()-topLeft.y()
+		resizedWidth = bottomRight.x()-topLeft.x()
+		top.x(anchorX+resizedWidth/2); left.y(anchorY+resizedHeight/2); right.y(anchorY+resizedHeight/2); bottom.x(anchorX+resizedWidth/2);
+		text.x(anchorX+resizedWidth/2); text.y(anchorY);
+		rect.position(topLeft.position());
+		rect.width(resizedWidth);
+		rect.height(resizedHeight);
+	}
+
 	handleGroupDragEnd = e => {
 		this.props.onCanvasGroupDragEnd(e);
 	}
 	handleGroupRef = r => {
     this.props.onCanvasGroupRef(r);
   }
-	handleCircleMouseDown = e => {
+	handleDotMouseOver = e => {
+		const activeAnchor = e.target
+		switch (activeAnchor.getName()) {
+			case 'topLeft':
+			case 'bottomRight':
+				document.body.style.cursor = 'nwse-resize';
+				break;
+			case 'topRight':
+			case 'bottomLeft':
+				document.body.style.cursor = 'nesw-resize';
+				break;
+			case 'top':
+			case 'bottom':
+				document.body.style.cursor = 'ns-resize';
+				break;
+			case 'left':
+			case 'right':
+				document.body.style.cursor = 'ew-resize';
+				break;
+		}
+	}
+	handleDotMouseOut = e => {
+		document.body.style.cursor = 'default';
+	}
+	handleDotMouseDown = e => {
 		const group = e.target.findAncestor('Group')
 		group.draggable(false)
 		group.moveToTop()
 		e.target.moveToTop()
-		this.props.onCanvasCircleMouseDown(e);
+		this.props.onCanvasDotMouseDown(e);
 	}
-	handleCircleDragEnd = e => {
-		this.props.onCanvasCircleDragEnd(e)
+	handleDotDragEnd = e => {
+		this.props.onCanvasDotDragEnd(e)
 	}
-	handleCircleDragMove = e => {
+	handleDotDragMove = e => {
+		const {width, height} = this.props
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
 		const topLeft = group.get('.topLeft')[0], topRight = group.get('.topRight')[0], bottomRight = group.get('.bottomRight')[0], bottomLeft = group.get('.bottomLeft')[0];
+		const top = group.get('.top')[0], left = group.get('.left')[0], right = group.get('.right')[0], bottom = group.get('.bottom')[0];
 		const rect = group.get('Rect')[0];
+		const text = group.get('Text')[0];
+		let resizedWidth, resizedHeight;
+
+		//set box resizing boundary
+		let absX = activeAnchor.getAbsolutePosition().x
+		let absY = activeAnchor.getAbsolutePosition().y
+		absX = absX < 0?0:absX;
+		absY = absY < 0?0:absY;
+		absX = absX > width?width:absX;
+		absY = absY > height?height:absY;
+		activeAnchor.setAbsolutePosition({x: absX, y:absY})
+
 		const anchorX = activeAnchor.getX();
 		const anchorY = activeAnchor.getY();
-	  // update anchor positions
+		// update anchor positions
 		switch (activeAnchor.getName()) {
 			case 'topLeft':
-		  	topRight.setY(anchorY);
-		    bottomLeft.setX(anchorX);
+		  	topRight.y(anchorY); top.y(anchorY); bottomLeft.x(anchorX); left.x(anchorX);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				top.x(anchorX+resizedWidth/2); left.y(anchorY+resizedHeight/2); right.y(anchorY+resizedHeight/2); bottom.x(anchorX+resizedWidth/2);
+				text.x(anchorX+resizedWidth/2); text.y(anchorY);
 		    break;
 			case 'topRight':
-		    topLeft.setY(anchorY);
-		    bottomRight.setX(anchorX);
+		    topLeft.y(anchorY); top.y(anchorY); bottomRight.x(anchorX); right.x(anchorX);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				top.x(anchorX-resizedWidth/2); left.y(anchorY+resizedHeight/2); right.y(anchorY+resizedHeight/2); bottom.x(anchorX-resizedWidth/2);
+				text.y(anchorY); text.x(anchorX-resizedWidth/2);
 		    break;
 		  case 'bottomRight':
-		    bottomLeft.setY(anchorY);
-		    topRight.setX(anchorX);
+		    bottomLeft.y(anchorY); bottom.y(anchorY); topRight.x(anchorX); right.x(anchorX);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				top.x(anchorX-resizedWidth/2); left.y(anchorY-resizedHeight/2); right.y(anchorY-resizedHeight/2); bottom.x(anchorX-resizedWidth/2);
+				text.x(anchorX-resizedWidth/2);
 		    break;
 		  case 'bottomLeft':
-		    bottomRight.setY(anchorY);
-		    topLeft.setX(anchorX);
+		    bottomRight.y(anchorY); bottom.y(anchorY); topLeft.x(anchorX); left.x(anchorX);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				top.x(anchorX+resizedWidth/2); left.y(anchorY-resizedHeight/2); right.y(anchorY-resizedHeight/2); bottom.x(anchorX+resizedWidth/2);
+				text.x(anchorX+resizedWidth/2);
 		    break;
+			case 'top':
+				topLeft.y(anchorY); topRight.y(anchorY);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				top.x(topLeft.x()+resizedWidth/2)
+				left.y(anchorY+resizedHeight/2); right.y(anchorY+resizedHeight/2);
+				text.y(anchorY);
+			break;
+			case 'left':
+				topLeft.x(anchorX); bottomLeft.x(anchorX);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				left.y(topLeft.y()+resizedHeight/2);
+				top.x(anchorX+resizedWidth/2); bottom.x(anchorX+resizedWidth/2);
+				text.x(anchorX+resizedWidth/2);
+			break;
+			case 'right':
+				topRight.x(anchorX); bottomRight.x(anchorX);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				right.y(topLeft.y()+resizedHeight/2);
+				top.x(anchorX-resizedWidth/2); bottom.x(anchorX-resizedWidth/2);
+				text.x(anchorX-resizedWidth/2)
+			break;
+			case 'bottom':
+				bottomLeft.y(anchorY); bottomRight.y(anchorY);
+				resizedHeight = bottomRight.y()-topLeft.y()
+				resizedWidth = bottomRight.x()-topLeft.x()
+				bottom.x(topLeft.x()+resizedWidth/2);
+				left.y(anchorY-resizedHeight/2); right.y(anchorY-resizedHeight/2);
+			break;
 		}
 		rect.position(topLeft.position());
-		const width = topRight.getX() - topLeft.getX();
-		const height = bottomLeft.getY() - topLeft.getY();
-		if(width && height) {
-			rect.width(width);
-		  rect.height(height);
+
+		if(resizedWidth && resizedHeight) {
+			rect.width(resizedWidth);
+		  rect.height(resizedHeight);
 		}
 	}
-	/*
-	handleExitClick = e =>{
-		this.props.onCanvasExitClick(e);
-	}
-	handleForkClick = e =>{
-		this.props.onCanvasForkClick(e);
-	}
-	handleSplitClick = e =>{
-		this.props.onCanvasSplitClick(e);
-	}
-	*/
-	//for testing
-	handle = e => {}
+	handle = e => {} //for testing
+
 	render() {
 		const { height, width, objects, played, focusing} = this.props;
+		const { dotLength } = this.state
 		const layerItems = [];
 		objects.forEach( obj => {
 			let trajectories = obj.trajectories
@@ -112,15 +241,19 @@ class Canvas extends Component {
 						width = interpoArea.width;
 						height = interpoArea.height;
 					}
-					let circles = []
+					let dots = []
 					let fill = (focusing===obj.name)? obj.color.replace(/,1\)/, ",.3)"): ""
 					let rect = <Rect x={0} y={0} fill={fill} width={width} height={height} stroke={obj.color} strokeWidth={1}/>
-					let name = <Text x={10} y={height} fontFamily={'Calibri'} text={obj.name} fontSize={15} lineHeight={1.2} fill={'#fff'} ></Text>
-					circles.push(<Circle x={0} y={0} key={'topLeft'} name={'topLeft'} stroke={obj.color} fill={obj.color} strokeWidth={0} radius={4} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-					circles.push(<Circle x={width} y={0} key={'topRight'} name={'topRight'} stroke={obj.color} fill={obj.color} strokeWidth={0} radius={4} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-					circles.push(<Circle x={width} y={height} key={'bottomRight'} name={'bottomRight'} stroke={obj.color} fill={obj.color} strokeWidth={0} radius={4} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-					circles.push(<Circle x={0} y={height} key={'bottomLeft'} name={'bottomLeft'} stroke={obj.color} fill={obj.color} strokeWidth={0} radius={4} draggable={true} dragOnTop={false} onDragMove={this.handleCircleDragMove} onMouseDown={this.handleCircleMouseDown} onDragEnd={this.handleCircleDragEnd} onMouseOver={this.handle} onMouseOut={this.handle} />)
-					layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart}>{rect}{circles}{name}</Group>)
+					let name = <Text offsetX={20} offsetY={30} x={width/2} y={0} width={44} align={'center'} fontFamily={'Calibri'} text={`box ${obj.id}`} fontSize={16} lineHeight={1.2} fill={'#fff'} ></Text>
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={0} y={0} key={'topLeft'} name={'topLeft'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut}  />)
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={width} y={0} key={'topRight'} name={'topRight'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut} />)
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={width} y={height} key={'bottomRight'} name={'bottomRight'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut} />)
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={0} y={height} key={'bottomLeft'} name={'bottomLeft'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut} />)
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={width/2} y={0} key={'top'} name={'top'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut}  />)
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={0} y={height/2} key={'left'} name={'left'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut} />)
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={width} y={height/2} key={'right'} name={'right'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut} />)
+					dots.push(<Rect offsetX={dotLength/2} offsetY={dotLength/2} x={width/2} y={height} key={'bottom'} name={'bottom'} stroke={obj.color} fill={obj.color} strokeWidth={0} width={dotLength} height={dotLength} draggable={true} dragOnTop={false} onDragMove={this.handleDotDragMove} onMouseDown={this.handleDotMouseDown} onDragEnd={this.handleDotDragEnd} onMouseOver={this.handleDotMouseOver} onMouseOut={this.handleDotMouseOut} />)
+					layerItems.push(<Group x={x} y={y} key={obj.name} name={obj.name} ref={this.handleGroupRef} draggable={true} onDragMove={this.handle} onMouseDown={this.handleGroupMouseDown} onDragEnd={this.handleGroupDragEnd} onDragStart={this.handleGroupDragStart} onDragMove={this.handleGroupDragMove}>{name}{rect}{dots}</Group>)
 					break;
 				}
 			}

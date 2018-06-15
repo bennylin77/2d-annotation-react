@@ -1,5 +1,6 @@
 export class VideoObject {
-  constructor({name, color, trajectories, children = [], parent = ''}) {
+  constructor({id, name, color, trajectories, children = [], parent = ''}) {
+		this.id = id;
     this.name = name;
     this.color = color;
 		this.trajectories =  trajectories;
@@ -17,7 +18,16 @@ export class Trajectory{
 		this.time = time;
 		this.status = status;
   }
+	static clearDuplicateTrajectory(trajectories, status){
+		console.log(trajectories)
+		for (let i = trajectories.length - 1; i > 0; i--) {
+	    if (trajectories[i].status === status && trajectories[i].status === trajectories[i-1].status) {
+	        trajectories.splice(i, 1);
+	    }
+		}
+	}
 }
+
 export const SHOW = 'Show'
 export const HIDE = 'Hide'
-export const SPLITED = 'Splited'
+export const SPLITTED = 'Splitted'

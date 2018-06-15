@@ -12,7 +12,7 @@ export function fetch2DVideo(id){
 			const dummnyResponse = {
 				width: 848,
 				height: 480,
-				url: "https://cildata.crbs.ucsd.edu/media/videos/15798/15798_web.mp4"
+				url: "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4"
 			}
 			resolve(dummnyResponse)
 		}).then(response => dispatch(receive2DVideo(id, response)))
