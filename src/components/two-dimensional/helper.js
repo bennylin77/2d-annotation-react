@@ -2,9 +2,9 @@ const colors = ["rgba(0,255,81,1)", "rgba(255,219,0,1)", "rgba(255,0,0,1)", "rgb
 const getRandomInt = max => {
   return Math.floor(Math.random() * Math.floor(max));
 }
-const interpolationArea = ({ startTraj, endTraj, played, currentTimeOffset=0 }) => {
+const interpolationArea = ({ startTraj, endTraj, played }) => {
 	let lapseTime = endTraj.time - startTraj.time;
-	let curTime = played - currentTimeOffset - startTraj.time;
+	let curTime = played - startTraj.time;
 	let widthSlope = (endTraj.width - startTraj.width)/lapseTime
 	let heightSlope = (endTraj.height - startTraj.height)/lapseTime
 	let width = widthSlope * curTime + startTraj.width
@@ -13,17 +13,13 @@ const interpolationArea = ({ startTraj, endTraj, played, currentTimeOffset=0 }) 
 }
 
 
-const interpolationPosition = ({ startTraj, endTraj, played, currentTimeOffset=0, startTrajXCorrection = 0, startTrajYCorrection = 0 }) => {
-	//console.log(`startTraj.x: ${startTraj.x}`)
-	//console.log(`startTraj.y: ${startTraj.y}`)
+const interpolationPosition = ({ startTraj, endTraj, played }) => {
 	let lapseTime = endTraj.time - startTraj.time;
-	let curTime = played - currentTimeOffset - startTraj.time;
+	let curTime = played - startTraj.time;
 	let xSlope = (endTraj.x - startTraj.x)/lapseTime;
 	let ySlope = (endTraj.y - startTraj.y)/lapseTime;
-	let x = xSlope * curTime + startTraj.x + startTrajXCorrection;
-	let y = ySlope * curTime + startTraj.y + startTrajYCorrection;
-	//console.log(xSlope * curTime)
-	//console.log(ySlope * curTime)
+	let x = xSlope * curTime + startTraj.x;
+	let y = ySlope * curTime + startTraj.y;
 	return { x: x, y: y}
 }
 

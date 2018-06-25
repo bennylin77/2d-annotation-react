@@ -96,7 +96,7 @@ class Manager extends Component {
 		const name = (new Date()).getTime().toString(36);
 		const color = colors[getRandomInt(colors.length)]
 		const trajectories = []
-		this.UndoRedo.save(this.state); // Undo/Redo
+		this.UndoRedo.save({...this.state, adding: false}); // Undo/Redo
 		this.setState((prevState, props) => {
 			trajectories.push( new Trajectory({x: position.x, y: position.y, height: 1, width: 1, time: prevState.played}) )
 			return { adding: !prevState.adding, objectCounter: prevState.objectCounter+1, focusing: `${name}`, objects: [...prevState.objects, new VideoObject({id: prevState.objectCounter+1, name: `${name}`, color: color, trajectories: trajectories})]};
@@ -113,18 +113,12 @@ class Manager extends Component {
 	}
 	handleCanvasGroupDragStart = e =>{}
 	handleCanvasGroupDragEnd = e =>{
-		if(e.target.getClassName() != 'Group')
+		if(e.target.getClassName() !== 'Group')
 			return;
 		const group = e.target
 		const rect = group.get('Rect')[0];
 		const topLeft = group.get('.topLeft')[0]
 		const position = topLeft.getAbsolutePosition()
-		//console.log();
-		//console.log(`group`);
-		//console.log(group);
-		//console.log(`group position: ${position.x}, ${position.y}`);
-
-
 		this.setState((prevState, props) => {
 			const played = prevState.played
 			return { playing: false, objects: prevState.objects.map( obj =>{
@@ -144,7 +138,6 @@ class Manager extends Component {
 								trajectories.push(new Trajectory({x: position.x, y: position.y, width: rect.width(), height: rect.height(), time: played}));
 								break;
 							}
-							//let interpoArea = interpolationArea( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
 							trajectories.splice(i+1, 0, new Trajectory({x: position.x, y: position.y, height: rect.height(), width: rect.width(), time: played}));
 							break;
 						}
@@ -164,69 +157,39 @@ class Manager extends Component {
 		const activeAnchor = e.target
 		const group = activeAnchor.getParent();
 		group.draggable(true)
-		let topLeft = group.get('.topLeft')[0];
-		let topRight = group.get('.topRight')[0];
-		let bottomRight = group.get('.bottomRight')[0];
-		let bottomLeft = group.get('.bottomLeft')[0];
-		let width = Math.abs(topRight.x() - topLeft.x());
-		let height =  Math.abs(bottomLeft.y() - topLeft.y());
-		if(width && height) {
-			this.setState((prevState, props) => {
-				const played = prevState.played
-				return { objects: prevState.objects.map( obj =>{
-						if(obj.name !== group.name())
-							return obj;
-						let trajectories = obj.trajectories
-						for( let i = 0; i < trajectories.length; i++){
+		const topLeft = group.get('.topLeft')[0], topRight = group.get('.topRight')[0], bottomRight = group.get('.bottomRight')[0], bottomLeft = group.get('.bottomLeft')[0];
+		const maxX = Math.max(topLeft.getAbsolutePosition().x, topRight.getAbsolutePosition().x, bottomRight.getAbsolutePosition().x, bottomLeft.getAbsolutePosition().x)
+		const minX = Math.min(topLeft.getAbsolutePosition().x, topRight.getAbsolutePosition().x, bottomRight.getAbsolutePosition().x, bottomLeft.getAbsolutePosition().x)
+		const maxY = Math.max(topLeft.getAbsolutePosition().y, topRight.getAbsolutePosition().y, bottomRight.getAbsolutePosition().y, bottomLeft.getAbsolutePosition().y)
+		const minY = Math.min(topLeft.getAbsolutePosition().y, topRight.getAbsolutePosition().y, bottomRight.getAbsolutePosition().y, bottomLeft.getAbsolutePosition().y)
+		this.setState((prevState, props) => {
+			const played = prevState.played
+			return { objects: prevState.objects.map( obj =>{
+				if(obj.name !== group.name())
+					return obj;
+					let trajectories = obj.trajectories
+					for( let i = 0; i < trajectories.length; i++){
 							if(played >= trajectories[i].time){
 								//skip elapsed trajectories
 								if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 									continue;
-								let xCorrection, yCorrection;
-								if(topLeft.x() < topRight.x() && topLeft.y() < bottomLeft.y()){
-									xCorrection = topLeft.x();
-									yCorrection = topLeft.y();
-									//console.log('topLeft')
-								}else if(topRight.x() < topLeft.x() && topRight.y() < bottomLeft.y()){
-									xCorrection = topRight.x()
-									yCorrection = topRight.y()
-									//console.log('topRight')
-								}else if(bottomLeft.x() < topRight.x() && bottomLeft.y() < topLeft.y()){
-									xCorrection = bottomLeft.x()
-									yCorrection = bottomLeft.y()
-									//console.log('bottomLeft')
-								}else if(bottomRight.x() < bottomLeft.x() && bottomRight.y() < topRight.y()){
-									xCorrection = bottomRight.x()
-									yCorrection = bottomRight.y()
-									//console.log('bottomRight')
-								}
-								if(played === trajectories[i].time){
-									trajectories[i].x+=xCorrection;
-									trajectories[i].y+=yCorrection;
-									trajectories[i].width=width;
-									trajectories[i].height=height;
+								if(played===trajectories[i].time){
+									trajectories[i].x = minX; trajectories[i].y = minY; trajectories[i].height = maxY-minY; trajectories[i].width = maxX-minX;
 									break;
 								}
-								if(i===trajectories.length-1){
-									trajectories.push(new Trajectory({x: trajectories[i].x+xCorrection, y: trajectories[i].y+yCorrection, height: height, width: width, time: played}));
-									break;
-								}
-								let interpoPos = interpolationPosition( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played, startTrajXCorrection: xCorrection, startTrajYCorrection: yCorrection})
-								trajectories.splice( i+1, 0, new Trajectory({x: interpoPos.x, y: interpoPos.y, height: height, width: width, time: played}))
+								trajectories.splice( i+1, 0, new Trajectory({x: minX, y: minY, height: maxY-minY, width: maxX-minX, time: played}))
 								break;
 							}
-						}
-						return { ...obj, trajectories: trajectories};
-					})
-				}
-			})
-		}
+					}
+					return { ...obj, trajectories: trajectories};
+				})
+			}
+		})
 	}
 	/* ==================== list ==================== */
 	handleListObjectItemClick = name =>{
 		this.setState({focusing: name})
 	}
-
 	handleListTrajectoryJump = e => {
 		const name = e.name
 		const time = e.time
@@ -241,11 +204,11 @@ class Manager extends Component {
 					break;
 				}
 		})
-
 	}
 	handleListTrajectoryDelete = e => {
 		const name = e.name
 		const time = e.time
+		this.UndoRedo.save(this.state); // Undo/Redo
 		this.setState((prevState) => {
 			const objects = prevState.objects.map( obj => {
 				if(obj.name !== name)
@@ -261,6 +224,7 @@ class Manager extends Component {
 		});
 	}
 	handleListObjectDelete = name => {
+		this.UndoRedo.save(this.state); // Undo/Redo
 		this.setState((prevState) => {
 				const objects = prevState.objects.filter( object => {
 					if(object.name !== name)
@@ -273,6 +237,7 @@ class Manager extends Component {
 	handleListObjectShowHide = e => {
 		const name = e.name;
 		const status = e.status;
+		this.UndoRedo.save(this.state); // Undo/Redo
 		this.setState((prevState, props) => {
 			const played = prevState.played
 			return { objects: prevState.objects.map( obj =>{
@@ -289,7 +254,7 @@ class Manager extends Component {
 							if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
 								continue;
 							if(played===trajectories[i].time){
-								trajectories[i].status = status;
+								trajectories.splice(i, 1, new Trajectory({...trajectories[i], status: status}));
 								break;
 							}
 							if(i===trajectories.length-1){
@@ -317,8 +282,9 @@ class Manager extends Component {
 		const childTrajectories1 = []
 		const childTrajectories2 = []
 		const status = SPLITTED;
-		let exChildName1, exChildName2
-		let parentX, parentY, parentWidth, parentHeight
+		let exChildName1, exChildName2;
+		let parentX, parentY, parentWidth, parentHeight;
+		this.UndoRedo.save(this.state); // Undo/Redo
 		this.setState((prevState, props) => {
 			const played = prevState.played
 			let objects = prevState.objects.map( obj =>{
@@ -336,7 +302,7 @@ class Manager extends Component {
 						parentWidth = trajectories[i].width;
 						parentHeight = trajectories[i].height;
 						if(played===trajectories[i].time){
-							trajectories[i].status = status;
+							trajectories.splice(i, 1, new Trajectory({...trajectories[i], status: status}));
 							trajectories = trajectories.slice(0,i+1);
 							break;
 						}
@@ -373,6 +339,14 @@ class Manager extends Component {
 	handleUndo = () =>{
 		this.setState((prevState, props) => {
 			const state = this.UndoRedo.undo(prevState);
+			console.log(`pop out:`)
+			console.log(state)
+			return {...state};
+		})
+	}
+	handleRedo = () =>{
+		this.setState((prevState, props) => {
+			const state = this.UndoRedo.redo(prevState);
 			console.log(`pop out:`)
 			console.log(state)
 			return {...state};
@@ -482,55 +456,3 @@ function mapStateToProps(state) {
 }
 const App = connect(mapStateToProps)(Manager);
 export default App;
-
-
-
-
-/*
-<div className="text-right text-muted"><Duration seconds={played*duration}/> / <Duration seconds={duration}/></div>
-<Col>
-	<div className="sticky-top">
-		<UndoList undoStates={undoStates}/>
-	</div>
-</Col>
-handleCanvasForkClick = e => {
-	const group = e.target.getParent().getParent()
-	const childName = (new Date()).getTime().toString(36);
-	const childColor = colors[getRandomInt(colors.length)]
-	const childTrajectories = []
-	let parentX, parentY, parentWidth, parentHeight
-	this.setState((prevState, props) => {
-		const played = prevState.played
-		let objects = prevState.objects.map( obj =>{
-			if(obj.name !== group.name())
-				return obj;
-			let trajectories = obj.trajectories
-			for(let i=0; i<trajectories.length ;i++){
-				if(played >= trajectories[i].time){
-					//skip elapsed trajectories
-					if(i!==trajectories.length-1 && played >= trajectories[i+1].time)
-						continue;
-
-					if(i===trajectories.length-1){
-						parentX = trajectories[i].x;
-						parentY = trajectories[i].y;
-						parentWidth = trajectories[i].width;
-						parentHeight = trajectories[i].height;
-						break;
-					}
-					let interpoArea = interpolationArea( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
-					let interpoPos = interpolationPosition( { startTraj: trajectories[i], endTraj: trajectories[i+1], played: played })
-					parentX = interpoPos.x;
-					parentY = interpoPos.y;
-					parentWidth = interpoArea.width;
-					parentHeight = interpoArea.height;
-					break;
-				}
-			}
-			return { ...obj, children: [...obj.children, `${childName}`]};
-		})
-		childTrajectories.push({x: parentX+10, y: parentY+10, height: parentHeight, width: parentWidth, time: played})
-		return { objects: [...objects, {name: `${childName}`, color: childColor, trajectories: childTrajectories, children:[], parent: group.name() }]};
-	})
-}
-*/

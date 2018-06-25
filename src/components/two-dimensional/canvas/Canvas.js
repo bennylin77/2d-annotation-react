@@ -29,7 +29,7 @@ class Canvas extends Component {
 		this.props.onCanvasGroupDragStart(e);
 	}
 	handleGroupDragMove = e => {
-		if(e.target.getClassName() != 'Group')
+		if(e.target.getClassName() !== 'Group')
 			return;
 		const group = e.target;
 		const {width, height} = this.props
@@ -44,30 +44,10 @@ class Canvas extends Component {
 		for(let dot of [topLeft, topRight, bottomRight, bottomLeft, top, bottom, left, right]){
 			absX = dot.getAbsolutePosition().x
 			absY = dot.getAbsolutePosition().y
-			if(dot.getName()==='topRight' || dot.getName()==='right' || dot.getName()==='bottomRight'){
-				absX = absX < 1 ? 1:absX;
-			}
-			if(dot.getName()==='top' || dot.getName()==='bottom' || dot.getName()==='left' || dot.getName()==='topLeft' || dot.getName()==='bottomLeft'){
-				absX = absX < 0 ? 0:absX;
-			}
-			if(dot.getName()==='bottomLeft' || dot.getName()==='bottom' || dot.getName()==='bottomRight'){
-				absY = absY < 1 ? 1:absY;
-			}
-			if(dot.getName()==='right' || dot.getName()==='left' || dot.getName()==='top' || dot.getName()==='topLeft' || dot.getName()==='topRight'){
-				absY = absY < 0 ? 0:absY;
-			}
-			if(dot.getName()==='topLeft' || dot.getName()==='left' || dot.getName()==='bottomLeft'){
-				absX = absX < width-1 ? absX:width-1;
-			}
-			if(dot.getName()==='top' || dot.getName()==='bottom' || dot.getName()==='right' || dot.getName()==='topRight' || dot.getName()==='bottomRight'){
-				absX = absX < width ? absX:width;
-			}
-			if(dot.getName()==='topLeft' || dot.getName()==='top' || dot.getName()==='topRight'){
-				absY = absY < height-1 ? absY:height-1;
-			}
-			if(dot.getName()==='left' || dot.getName()==='right' || dot.getName()==='bottom' || dot.getName()==='bottomLeft' || dot.getName()==='bottomRight'){
-				absY = absY < height ? absY:height;
-			}
+			absX = absX < 0 ? 0:absX;
+			absY = absY < 0 ? 0:absY;
+			absX = absX > width ? width:absX;
+			absY = absY > height ? height:absY;
 			dot.setAbsolutePosition({x: absX, y:absY})
 		}
 		activeAnchor = topLeft;
@@ -132,7 +112,6 @@ class Canvas extends Component {
 		const rect = group.get('Rect')[0];
 		const text = group.get('Text')[0];
 		let resizedWidth, resizedHeight;
-
 		//set box resizing boundary
 		let absX = activeAnchor.getAbsolutePosition().x
 		let absY = activeAnchor.getAbsolutePosition().y
@@ -141,7 +120,6 @@ class Canvas extends Component {
 		absX = absX > width?width:absX;
 		absY = absY > height?height:absY;
 		activeAnchor.setAbsolutePosition({x: absX, y:absY})
-
 		const anchorX = activeAnchor.getX();
 		const anchorY = activeAnchor.getY();
 		// update anchor positions
@@ -207,11 +185,8 @@ class Canvas extends Component {
 			break;
 		}
 		rect.position(topLeft.position());
-
-		if(resizedWidth && resizedHeight) {
-			rect.width(resizedWidth);
-		  rect.height(resizedHeight);
-		}
+		rect.width(resizedWidth);
+		rect.height(resizedHeight);
 	}
 	handle = e => {} //for testing
 

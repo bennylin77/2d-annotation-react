@@ -19,7 +19,6 @@ export class Trajectory{
 		this.status = status;
   }
 	static clearDuplicateTrajectory(trajectories, status){
-		console.log(trajectories)
 		for (let i = trajectories.length - 1; i > 0; i--) {
 	    if (trajectories[i].status === status && trajectories[i].status === trajectories[i-1].status) {
 	        trajectories.splice(i, 1);

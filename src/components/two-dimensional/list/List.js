@@ -10,8 +10,6 @@ import FaChevronDown from 'react-icons/lib/fa/chevron-down';
 import FaChevronUp from 'react-icons/lib/fa/chevron-up';
 import IoEyeDisabled from 'react-icons/lib/io/eye-disabled';
 import IoEye from 'react-icons/lib/io/eye';
-import FaAngleDown from 'react-icons/lib/fa/angle-down';
-import FaAngleDoubleDown from 'react-icons/lib/fa/angle-double-down';
 import FaArrowDown from 'react-icons/lib/fa/arrow-down';
 
 import {SPLITTED, HIDE, SHOW} from '../../../models/2DVideo.js';
@@ -85,11 +83,11 @@ class List extends Component {
 																					</ListGroupItem>)
 											let angle;
 											//if(i!=trajectories.length-1){
-												if( i!=trajectories.length-1 && played > trajectories[i].time && played < trajectories[i+1].time)
+												if( i!==trajectories.length-1 && played > trajectories[i].time && played < trajectories[i+1].time)
 													angle = <ListGroupItem key={trajectories[i].time+1} className="trajectory-item"><FaArrowDown style={{color: "", fontSize: "1em"}} /></ListGroupItem>
-												else if( i==trajectories.length-1 && played > trajectories[i].time)
+												else if( i===trajectories.length-1 && played > trajectories[i].time)
 													angle = <ListGroupItem key={trajectories[i].time+1} className="trajectory-item"><FaArrowDown style={{color: "", fontSize: "1em"}} /></ListGroupItem>
-												else if( i!=trajectories.length-1 && played == trajectories[i+1].time)
+												else if( i!==trajectories.length-1 && played === trajectories[i+1].time)
 													angle = <ListGroupItem key={trajectories[i].time+1} className="trajectory-item"><FaArrowDown style={{color: "", fontSize: "1em"}} /></ListGroupItem>
 												else//( i==trajectories.length-1 && played <= trajectories[i].time)
 													angle = ""

@@ -6,7 +6,10 @@ export class UndoRedo {
   }
 
 	save = (state) => {
-		this.previous.push(state);
+		//console.log(state)
+		const clonedState = JSON.parse(JSON.stringify(state));
+		//console.log(clonedState)
+		this.previous.push(clonedState);
 		this.next = [];
 	}
 
